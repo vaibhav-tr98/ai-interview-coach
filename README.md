@@ -21,3 +21,18 @@ An AI-powered Interview Preparation Platform built with Java, Spring Boot, Postg
 ## Status
 
 ✅ Day 1 Completed
+## Progress
+
+### Day 1
+- Spring Boot project setup
+- PostgreSQL configuration
+- Health Check API
+
+### Day 2
+- User Entity
+- JPA Repository
+- Service Layer
+- REST Controller
+- CRUD APIs
+- PostgreSQL Integration
+- Tested APIs using Postman
