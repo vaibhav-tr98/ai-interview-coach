@@ -36,3 +36,9 @@ An AI-powered Interview Preparation Platform built with Java, Spring Boot, Postg
 - CRUD APIs
 - PostgreSQL Integration
 - Tested APIs using Postman
+- ## Day 3
+- Added DTOs (UserRequest & UserResponse)
+- Added Bean Validation
+- Added @Valid request validation
+- Added Global Exception Handler
+- Tested validation with Postman

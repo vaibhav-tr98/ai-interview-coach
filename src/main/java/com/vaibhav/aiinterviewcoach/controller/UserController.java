@@ -1,7 +1,9 @@
 package com.vaibhav.aiinterviewcoach.controller;
 
+import com.vaibhav.aiinterviewcoach.dto.UserRequest;
 import com.vaibhav.aiinterviewcoach.entity.User;
 import com.vaibhav.aiinterviewcoach.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,8 +17,8 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public User registerUser(@RequestBody User user) {
-        return userService.saveUser(user);
+    public User registerUser(@Valid @RequestBody UserRequest userRequest) {
+        return userService.saveUser(userRequest);
     }
 
     @GetMapping
