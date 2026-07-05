@@ -42,3 +42,28 @@ An AI-powered Interview Preparation Platform built with Java, Spring Boot, Postg
 - Added @Valid request validation
 - Added Global Exception Handler
 - Tested validation with Postman
+## Day 4 - Authentication with Spring Security
+
+### Features Implemented
+- Added Spring Security dependency
+- Configured BCrypt Password Encoder
+- Passwords are stored in encrypted format
+- Implemented Login API
+- Created LoginRequest and LoginResponse DTOs
+- Added custom exceptions:
+    - UserNotFoundException
+    - InvalidPasswordException
+- Improved authentication flow
+- Tested registration and login using Postman
+
+### Endpoints
+POST /api/v1/users/register
+POST /api/v1/users/login
+
+### Tech Used
+- Spring Boot
+- Spring Security
+- Spring Data JPA
+- PostgreSQL
+- BCrypt
+- Postman
