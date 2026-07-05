@@ -6,6 +6,8 @@ import com.vaibhav.aiinterviewcoach.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.vaibhav.aiinterviewcoach.dto.LoginRequest;
+import com.vaibhav.aiinterviewcoach.dto.LoginResponse;
 
 import java.util.List;
 
@@ -40,6 +42,10 @@ public class UserController {
     public User updateUser(@PathVariable Long id,
                            @RequestBody User user) {
         return userService.updateUser(id, user);
+    }
+    @PostMapping("/login")
+    public LoginResponse loginUser(@Valid @RequestBody LoginRequest loginRequest) {
+        return userService.loginUser(loginRequest);
     }
 
 }
