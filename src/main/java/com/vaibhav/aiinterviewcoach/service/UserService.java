@@ -4,6 +4,7 @@ import com.vaibhav.aiinterviewcoach.dto.UserRequest;
 import com.vaibhav.aiinterviewcoach.entity.User;
 import com.vaibhav.aiinterviewcoach.exception.GlobalExceptionHandler;
 import com.vaibhav.aiinterviewcoach.repository.UserRepository;
+import com.vaibhav.aiinterviewcoach.util.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -65,12 +66,21 @@ public class UserService {
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new InvalidPasswordException("Invalid password");
         }
+        String token = jwtService.generateToken(user.getEmail());
+
 
         LoginResponse response = new LoginResponse();
+
         response.setMessage("Login Successful");
         response.setName(user.getName());
         response.setRole(user.getRole());
 
+        response.setToken(token);
+
         return response;
+
+
     }
+    @Autowired
+    private JwtService jwtService;
 }

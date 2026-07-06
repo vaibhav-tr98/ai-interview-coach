@@ -5,6 +5,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.vaibhav.aiinterviewcoach.exception.UserNotFoundException;
+import com.vaibhav.aiinterviewcoach.exception.InvalidPasswordException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,10 +26,22 @@ public class GlobalExceptionHandler {
 
         return errors;
     }
-    public class UserNotFoundException extends RuntimeException {
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleUserNotFound(UserNotFoundException ex) {
 
-        public UserNotFoundException(String message) {
-            super(message);
-        }
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+    @ExceptionHandler(InvalidPasswordException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Map<String, String> handleInvalidPassword(InvalidPasswordException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
     }
 }
