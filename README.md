@@ -67,3 +67,36 @@ POST /api/v1/users/login
 - PostgreSQL
 - BCrypt
 - Postman
+- 📅 Day 5 Progress (JWT Authentication)
+  ✅ Completed
+  Added JJWT dependency
+  Created JwtService for JWT generation
+  Configured JWT secret key in application.properties
+  Generated JWT token after successful login
+  Updated LoginResponse to include JWT token
+  Integrated JwtService with UserService
+  Successfully tested login and JWT generation using Postman
+  🧪 Login API Response
+  {
+  "message": "Login Successful",
+  "name": "Vaibhav",
+  "role": "USER",
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
+  }
+  🔐 Current Authentication Flow
+  User Registration
+  │
+  ▼
+  Password encrypted using BCrypt
+  │
+  ▼
+  User Login
+  │
+  ▼
+  Password Verification
+  │
+  ▼
+  JWT Token Generation
+  │
+  ▼
+  JWT Returned to Client
