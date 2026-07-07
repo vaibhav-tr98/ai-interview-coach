@@ -115,3 +115,24 @@ JWT Returned to Client
 - Validate JWT tokens
 - Implement JWT Authentication Filter
 - Protect APIs using Spring Security
+
+
+- ## 📅 Day 6 Progress (JWT Filter & Route Protection)
+
+### ✅ Completed
+- Added JwtAuthenticationFilter
+- Registered JWT filter in SecurityConfig
+- Configured Spring Security filter chain
+- Protected all endpoints except:
+  - POST /api/v1/users/register
+  - POST /api/v1/users/login
+- Implemented Authorization header extraction
+- Extracted Bearer JWT token from incoming requests
+- Verified JWT token interception using Postman
+- Successfully generated JWT after login
+
+### 🚧 Next (Day 7)
+- Validate JWT signature
+- Extract user email from JWT
+- Authenticate user using SecurityContextHolder
+- Allow access to protected endpoints using valid JWT
