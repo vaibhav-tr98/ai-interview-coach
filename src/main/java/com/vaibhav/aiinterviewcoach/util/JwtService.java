@@ -1,7 +1,9 @@
 package com.vaibhav.aiinterviewcoach.util;
 
+import com.vaibhav.aiinterviewcoach.service.customUserDetailsService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Claims;
@@ -33,4 +35,9 @@ public String extractEmail(String token) {
 
         return claims.getSubject();
     }
+    public boolean validateToken(String token, String email) {
+        return extractEmail(token).equals(email);
+    }
+    @Autowired
+    private customUserDetailsService customUserDetailsService;
 }

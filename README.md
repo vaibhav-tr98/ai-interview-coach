@@ -131,8 +131,21 @@ JWT Returned to Client
 - Verified JWT token interception using Postman
 - Successfully generated JWT after login
 
-### 🚧 Next (Day 7)
-- Validate JWT signature
-- Extract user email from JWT
-- Authenticate user using SecurityContextHolder
-- Allow access to protected endpoints using valid JWT
+### 📅 Day 7 Progress (JWT Authentication)
+
+✅ Implemented CustomUserDetailsService
+
+✅ Completed JwtAuthenticationFilter
+
+✅ Extracted email from JWT
+
+✅ Validated JWT token
+
+✅ Authenticated users using SecurityContextHolder
+
+✅ Protected endpoints using Spring Security
+
+✅ Successfully accessed protected APIs with Bearer Token in Postman
+
+🔐 Authentication Flow:
+Login → Receive JWT → Send Bearer Token → JWT Filter Validates Token → SecurityContext Updated → Protected Endpoint Access Granted
