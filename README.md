@@ -149,3 +149,19 @@ JWT Returned to Client
 
 🔐 Authentication Flow:
 Login → Receive JWT → Send Bearer Token → JWT Filter Validates Token → SecurityContext Updated → Protected Endpoint Access Granted
+## 📅 Day 8 Progress (Role-Based Authorization)
+
+✅ Enabled Method Security using `@EnableMethodSecurity`
+
+✅ Added role-based authorization with `@PreAuthorize`
+
+✅ Created protected `/profile` endpoint (USER & ADMIN)
+
+✅ Created protected `/admin` endpoint (ADMIN only)
+
+✅ Successfully tested Bearer Token authentication
+
+✅ Verified USER receives 403 Forbidden when accessing ADMIN endpoint
+
+🔐 Authorization Flow:
+Login → Receive JWT → Send Bearer Token → JWT Authentication Filter → Security Context → Role Check → Endpoint Access Granted/Denied

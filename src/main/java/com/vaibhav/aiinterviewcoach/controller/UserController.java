@@ -1,10 +1,12 @@
 package com.vaibhav.aiinterviewcoach.controller;
 
 import com.vaibhav.aiinterviewcoach.dto.UserRequest;
+import com.vaibhav.aiinterviewcoach.dto.UserResponse;
 import com.vaibhav.aiinterviewcoach.entity.User;
 import com.vaibhav.aiinterviewcoach.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.vaibhav.aiinterviewcoach.dto.LoginRequest;
 import com.vaibhav.aiinterviewcoach.dto.LoginResponse;
@@ -24,7 +26,7 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<UserResponse> getAllUsers(){
         return userService.getAllUsers();
     }
 
@@ -47,5 +49,16 @@ public class UserController {
     public LoginResponse loginUser(@Valid @RequestBody LoginRequest loginRequest) {
         return userService.loginUser(loginRequest);
     }
+@GetMapping("/admin")
+@PreAuthorize("hasRole('ADMIN')")
+public String admin() {
+    return "Welcome Admin";
+}
+
+@GetMapping("/profile")
+@PreAuthorize("hasAnyRole('USER','ADMIN')")
+public String profile() {
+    return "Welcome User";
+}
 
 }

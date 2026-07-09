@@ -1,6 +1,6 @@
 package com.vaibhav.aiinterviewcoach.service;
 
-import com.vaibhav.aiinterviewcoach.dto.UserRequest;
+import com.vaibhav.aiinterviewcoach.dto.*;
 import com.vaibhav.aiinterviewcoach.entity.User;
 import com.vaibhav.aiinterviewcoach.exception.GlobalExceptionHandler;
 import com.vaibhav.aiinterviewcoach.repository.UserRepository;
@@ -9,9 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import com.vaibhav.aiinterviewcoach.dto.LoginRequest;
-import com.vaibhav.aiinterviewcoach.dto.LoginResponse;
-import com.vaibhav.aiinterviewcoach.dto.UserRequest;
+
 import com.vaibhav.aiinterviewcoach.exception.UserNotFoundException;
 import com.vaibhav.aiinterviewcoach.exception.InvalidPasswordException;
 
@@ -34,10 +32,20 @@ public class UserService {
 
         return userRepository.save(user);
     }
-    public List<User> getAllUsers(){
-        return userRepository.findAll();
-    }
-    public User getUserById(long id){
+    public List<UserResponse> getAllUsers() {
+        List<User> users = userRepository.findAll();
+
+        return users.stream().map(user -> {
+            UserResponse response = new UserResponse();
+
+            response.setId(user.getId());
+            response.setName(user.getName());
+            response.setEmail(user.getEmail());
+            response.setRole(user.getRole());
+
+            return response;
+        }).toList();
+    }    public User getUserById(long id){
         return userRepository.findById(id).orElse(null);
     }
     public void deleteUser(Long id){
