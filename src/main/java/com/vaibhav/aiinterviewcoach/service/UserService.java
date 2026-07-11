@@ -51,20 +51,23 @@ public class UserService {
     public void deleteUser(Long id){
         userRepository.deleteById(id);
     }
-    public User updateUser(Long id, User updatedUser) {
-        User existingUser = userRepository.findById(id).orElse(null);
+    public UserResponse updateUser(Long id, UpdateUserRequest request) {
 
-        if (existingUser != null) {
-            existingUser.setName(updatedUser.getName());
-            existingUser.setEmail(updatedUser.getEmail());
-            existingUser.setPassword(updatedUser.getPassword());
-            existingUser.setRole(updatedUser.getRole());
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-            return userRepository.save(existingUser);
-        }
+        existingUser.setName(request.getName());
+        existingUser.setEmail(request.getEmail());
 
+        User updatedUser = userRepository.save(existingUser);
 
-        return null;
+        UserResponse response = new UserResponse();
+        response.setId(updatedUser.getId());
+        response.setName(updatedUser.getName());
+        response.setEmail(updatedUser.getEmail());
+        response.setRole(updatedUser.getRole());
+
+        return response;
     }
     public LoginResponse loginUser(LoginRequest loginRequest) {
 

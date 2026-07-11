@@ -1,15 +1,12 @@
 package com.vaibhav.aiinterviewcoach.controller;
 
-import com.vaibhav.aiinterviewcoach.dto.UserRequest;
-import com.vaibhav.aiinterviewcoach.dto.UserResponse;
+import com.vaibhav.aiinterviewcoach.dto.*;
 import com.vaibhav.aiinterviewcoach.entity.User;
 import com.vaibhav.aiinterviewcoach.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.vaibhav.aiinterviewcoach.dto.LoginRequest;
-import com.vaibhav.aiinterviewcoach.dto.LoginResponse;
 
 import java.util.List;
 
@@ -41,9 +38,13 @@ public class UserController {
     return"user deleted successfully!";
 }
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id,
-                           @RequestBody User user) {
-        return userService.updateUser(id, user);
+    public UserResponse updateUser(
+            @PathVariable Long id,
+            @RequestBody UpdateUserRequest request) {
+        System.out.println("===== UPDATE CONTROLLER HIT =====");
+
+
+        return userService.updateUser(id, request);
     }
     @PostMapping("/login")
     public LoginResponse loginUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -60,5 +61,6 @@ public String admin() {
 public String profile() {
     return "Welcome User";
 }
+
 
 }
