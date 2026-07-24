@@ -165,3 +165,47 @@ Login → Receive JWT → Send Bearer Token → JWT Filter Validates Token → S
 
 🔐 Authorization Flow:
 Login → Receive JWT → Send Bearer Token → JWT Authentication Filter → Security Context → Role Check → Endpoint Access Granted/Denied
+## Day 10 – Spring AI & OpenRouter Integration
+
+### ✅ Completed
+- Integrated Spring AI into the project.
+- Created dedicated AI module:
+  - `AiController`
+  - `AiService`
+  - `PromptRequest`
+  - `PromptResponse`
+- Added `/api/ai/chat` REST endpoint.
+- Configured Spring Security to allow public access to AI endpoints.
+- Implemented AI request/response flow using Spring AI `ChatClient`.
+- Migrated from Google Gemini to OpenRouter due to Google Cloud billing restrictions.
+- Successfully connected the backend with the OpenRouter API.
+- Verified that requests travel through the complete pipeline:
+  ```
+  Client → Spring Boot → AI Service → OpenRouter
+  ```
+
+### 🐛 Issues Resolved
+- Fixed Spring AI dependency configuration.
+- Resolved Spring Boot startup issues caused by AI configuration.
+- Fixed `403 Forbidden` by updating Spring Security configuration.
+- Verified JWT filter compatibility with public AI endpoints.
+- Confirmed AI endpoint receives and processes requests correctly.
+
+### ⚠️ Current Blocker
+- OpenRouter account has **$0.00 credits**, resulting in:
+  ```
+  HTTP 402 - Payment Required
+  ```
+- Backend integration is complete; only API credits are required to receive AI-generated responses.
+
+### 📌 Next Steps (Day 11)
+- Add OpenRouter credits.
+- Verify successful AI responses.
+- Design Interview Prompt Engine.
+- Create Interview Modes:
+  - HR
+  - Java
+  - Spring Boot
+  - SQL
+  - DSA
+- Begin AI Interview Session workflow.
