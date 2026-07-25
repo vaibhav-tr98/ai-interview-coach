@@ -209,3 +209,9 @@ Login → Receive JWT → Send Bearer Token → JWT Authentication Filter → Se
   - SQL
   - DSA
 - Begin AI Interview Session workflow.
+- ## 📅 Day 11
+- Built the AI Interview module (Controller, Service, DTOs, Prompt Builder)
+- Integrated Spring AI with OpenRouter
+- Configured environment variables and security
+- Added interview start API and prompt generation
+- Debugged Spring AI ↔ OpenRouter integration (ongoing)
