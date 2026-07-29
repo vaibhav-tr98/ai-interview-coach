@@ -25,7 +25,7 @@ public class PromptBuilder {
                 - Be professional.
                 """);
 
-        prompt.append("\nInterview Type: ")
+        prompt.append("\ninterview Type: ")
                 .append(interviewType);
 
         prompt.append("\nExperience: ")

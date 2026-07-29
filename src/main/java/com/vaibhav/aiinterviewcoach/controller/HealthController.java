@@ -8,6 +8,6 @@ public class HealthController {
 
     @GetMapping("/api/v1/health")
     public String health() {
-        return "AI Interview Coach Backend is Running!";
+        return "AI interview Coach Backend is Running!";
     }
 }

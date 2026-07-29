@@ -213,5 +213,41 @@ Login → Receive JWT → Send Bearer Token → JWT Authentication Filter → Se
 - Built the AI Interview module (Controller, Service, DTOs, Prompt Builder)
 - Integrated Spring AI with OpenRouter
 - Configured environment variables and security
-- Added interview start API and prompt generation
+- Added Interview start API and prompt generation
 - Debugged Spring AI ↔ OpenRouter integration (ongoing)
+- ## Day 12 - Interview Module Foundation
+
+### Completed
+- Created modular interview package structure.
+- Added `Interview` entity with JPA annotations.
+- Added interview enums:
+  - `InterviewType`
+  - `InterviewStatus`
+  - `Difficulty`
+- Created `InterviewRepository`.
+- Organized the project using a feature-based architecture.
+- Verified the application builds and runs successfully.
+
+### Current Progress
+- ✅ Authentication & JWT
+- ✅ AI Question Generation
+- ✅ Interview Module Foundation
+- 🚧 Interview Persistence (In Progress)
+
+### Next Steps
+- Associate interviews with authenticated users.
+- Save interviews in MySQL.
+- Create interview sessions and questions.
+- Implement answer evaluation and interview history.
+- ## Progress
+
+- [x] User Authentication (JWT)
+- [x] Spring Security
+- [x] AI Integration (Spring AI)
+- [x] Prompt Builder
+- [x] Interview Module Structure
+- [x] Interview Entity & Repository
+- [ ] Interview Persistence
+- [ ] Interview Session Management
+- [ ] AI Evaluation
+- [ ] Interview Analytics
