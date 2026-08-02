@@ -1,4 +1,5 @@
 package com.vaibhav.aiinterviewcoach.interview.service;
+import com.vaibhav.aiinterviewcoach.repository.UserRepository;
 
 import com.vaibhav.aiinterviewcoach.interview.dto.InterviewRequest;
 import com.vaibhav.aiinterviewcoach.interview.dto.InterviewResponse;
@@ -8,6 +9,12 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.vaibhav.aiinterviewcoach.entity.User;
+
+
+
 
 @Service
 public class InterviewService {
@@ -18,11 +25,12 @@ public class InterviewService {
 
     public InterviewService(ChatClient.Builder builder,
                             PromptBuilder promptBuilder,
-                            InterviewRepository interviewRepository) {
+                            InterviewRepository interviewRepository, UserRepository userRepository) {
 
         this.chatClient = builder.build();
         this.promptBuilder = promptBuilder;
         this.interviewRepository = interviewRepository;
+        this.userRepository = userRepository;
     }
 
     public InterviewResponse startInterview(InterviewRequest request) {
@@ -62,4 +70,21 @@ public class InterviewService {
             );
         }
     }
+    private String getCurrentUserEmail() {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        return authentication.getName();
+    }
+    private final UserRepository userRepository;
+    private User getCurrentUser() {
+
+        String email = getCurrentUserEmail();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+    }
+
 }
