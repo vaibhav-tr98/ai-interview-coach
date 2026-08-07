@@ -251,3 +251,14 @@ Login → Receive JWT → Send Bearer Token → JWT Authentication Filter → Se
 - [ ] Interview Session Management
 - [ ] AI Evaluation
 - [ ] Interview Analytics
+- till now we have done-
+-
+- User Registration & Login
+- JWT Authentication & Authorization
+- Spring Security
+- PostgreSQL Database
+- Interview Creation & Persistence
+- AI-powered Interview Generation (Spring AI)
+- REST APIs
+- Layered Architecture
+- Input Validation

@@ -2,7 +2,7 @@ package com.vaibhav.aiinterviewcoach.interview.dto;
 
 public record InterviewResponse(
 
-        String sessionId,
+        String interviewId,
 
         String question,
 
