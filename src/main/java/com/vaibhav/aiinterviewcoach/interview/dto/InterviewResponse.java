@@ -4,6 +4,8 @@ public record InterviewResponse(
 
         String interviewId,
 
+        String sessionId,
+
         String question,
 
         String interviewType

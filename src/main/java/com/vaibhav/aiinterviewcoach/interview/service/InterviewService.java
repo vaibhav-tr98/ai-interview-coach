@@ -9,6 +9,9 @@ import com.vaibhav.aiinterviewcoach.interview.enums.InterviewStatus;
 import com.vaibhav.aiinterviewcoach.interview.enums.InterviewType;
 import com.vaibhav.aiinterviewcoach.interview.prompt.PromptBuilder;
 import com.vaibhav.aiinterviewcoach.interview.repository.InterviewRepository;
+import com.vaibhav.aiinterviewcoach.interview.session.InterviewSession;
+import com.vaibhav.aiinterviewcoach.interview.session.InterviewSessionRepository;
+import com.vaibhav.aiinterviewcoach.interview.session.SessionStatus;
 import com.vaibhav.aiinterviewcoach.repository.UserRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.security.core.Authentication;
@@ -21,16 +24,19 @@ public class InterviewService {
     private final ChatClient chatClient;
     private final PromptBuilder promptBuilder;
     private final InterviewRepository interviewRepository;
+    private final InterviewSessionRepository interviewSessionRepository;
     private final UserRepository userRepository;
 
     public InterviewService(ChatClient.Builder builder,
                             PromptBuilder promptBuilder,
                             InterviewRepository interviewRepository,
+                            InterviewSessionRepository interviewSessionRepository,
                             UserRepository userRepository) {
 
         this.chatClient = builder.build();
         this.promptBuilder = promptBuilder;
         this.interviewRepository = interviewRepository;
+        this.interviewSessionRepository = interviewSessionRepository;
         this.userRepository = userRepository;
     }
 
@@ -68,8 +74,21 @@ public class InterviewService {
                     .call()
                     .content();
 
+            InterviewSession session = InterviewSession.builder()
+                    .interview(interview)
+                    .currentQuestion(question)
+                    .questionNumber(1)
+                    .status(SessionStatus.ACTIVE)
+                    .build();
+
+            session = interviewSessionRepository.save(session);
+
+            interview.setStatus(InterviewStatus.STARTED);
+            interviewRepository.save(interview);
+
             return new InterviewResponse(
                     interview.getId().toString(),
+                    session.getSessionId(),
                     question,
                     request.interviewType()
             );
@@ -83,6 +102,7 @@ public class InterviewService {
 
             return new InterviewResponse(
                     interview.getId().toString(),
+                    null,
                     t.toString(),
                     request.interviewType()
             );
