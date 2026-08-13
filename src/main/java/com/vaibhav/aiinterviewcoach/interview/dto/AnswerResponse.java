@@ -5,6 +5,7 @@ public record AnswerResponse(
         Integer questionNumber,
         String previousQuestion,
         String answer,
-        String nextQuestion
+        String nextQuestion,
+        Boolean completed
 ) {
 }

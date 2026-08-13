@@ -143,6 +143,25 @@ public class InterviewService {
 
         questionAnswerRepository.save(questionAnswer);
 
+        if (currentQuestionNumber >= 5) {
+            session.setStatus(SessionStatus.COMPLETED);
+            session.setCurrentQuestion(null);
+            interviewSessionRepository.save(session);
+
+            Interview interview = session.getInterview();
+            interview.setStatus(InterviewStatus.COMPLETED);
+            interviewRepository.save(interview);
+
+            return new AnswerResponse(
+                    sessionId,
+                    currentQuestionNumber,
+                    currentQuestion,
+                    request.answer(),
+                    null,
+                    true
+            );
+        }
+
         String prompt = promptBuilder.buildNextQuestionPrompt(
                 session.getInterview().getType().name(),
                 currentQuestionNumber + 1,
@@ -165,7 +184,8 @@ public class InterviewService {
                     session.getQuestionNumber(),
                     currentQuestion,
                     request.answer(),
-                    nextQuestion
+                    nextQuestion,
+                    false
             );
         } catch (Exception e) {
             // Keep the answer persisted, but return error response
