@@ -9,9 +9,13 @@ import com.vaibhav.aiinterviewcoach.interview.enums.InterviewStatus;
 import com.vaibhav.aiinterviewcoach.interview.enums.InterviewType;
 import com.vaibhav.aiinterviewcoach.interview.prompt.PromptBuilder;
 import com.vaibhav.aiinterviewcoach.interview.repository.InterviewRepository;
+import com.vaibhav.aiinterviewcoach.interview.repository.QuestionAnswerRepository;
 import com.vaibhav.aiinterviewcoach.interview.session.InterviewSession;
 import com.vaibhav.aiinterviewcoach.interview.session.InterviewSessionRepository;
 import com.vaibhav.aiinterviewcoach.interview.session.SessionStatus;
+import com.vaibhav.aiinterviewcoach.interview.entity.QuestionAnswer;
+import com.vaibhav.aiinterviewcoach.interview.dto.AnswerRequest;
+import com.vaibhav.aiinterviewcoach.interview.dto.AnswerResponse;
 import com.vaibhav.aiinterviewcoach.repository.UserRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.security.core.Authentication;
@@ -25,18 +29,21 @@ public class InterviewService {
     private final PromptBuilder promptBuilder;
     private final InterviewRepository interviewRepository;
     private final InterviewSessionRepository interviewSessionRepository;
+    private final QuestionAnswerRepository questionAnswerRepository;
     private final UserRepository userRepository;
 
     public InterviewService(ChatClient.Builder builder,
                             PromptBuilder promptBuilder,
                             InterviewRepository interviewRepository,
                             InterviewSessionRepository interviewSessionRepository,
+                            QuestionAnswerRepository questionAnswerRepository,
                             UserRepository userRepository) {
 
         this.chatClient = builder.build();
         this.promptBuilder = promptBuilder;
         this.interviewRepository = interviewRepository;
         this.interviewSessionRepository = interviewSessionRepository;
+        this.questionAnswerRepository = questionAnswerRepository;
         this.userRepository = userRepository;
     }
 
@@ -106,6 +113,62 @@ public class InterviewService {
                     t.toString(),
                     request.interviewType()
             );
+        }
+    }
+
+    public AnswerResponse submitAnswer(String sessionId, AnswerRequest request) {
+        User currentUser = getCurrentUser();
+
+        InterviewSession session = interviewSessionRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        if (!session.getInterview().getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized to access this session");
+        }
+
+        if (session.getStatus() == SessionStatus.COMPLETED) {
+            throw new RuntimeException("Session is already completed");
+        }
+
+        String currentQuestion = session.getCurrentQuestion();
+        Integer currentQuestionNumber = session.getQuestionNumber();
+
+        QuestionAnswer questionAnswer = QuestionAnswer.builder()
+                .session(session)
+                .questionNumber(currentQuestionNumber)
+                .question(currentQuestion)
+                .answer(request.answer())
+                .build();
+
+        questionAnswerRepository.save(questionAnswer);
+
+        String prompt = promptBuilder.buildNextQuestionPrompt(
+                session.getInterview().getType().name(),
+                currentQuestionNumber + 1,
+                currentQuestion,
+                request.answer()
+        );
+
+        try {
+            String nextQuestion = chatClient.prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
+
+            session.setCurrentQuestion(nextQuestion);
+            session.setQuestionNumber(currentQuestionNumber + 1);
+            interviewSessionRepository.save(session);
+
+            return new AnswerResponse(
+                    sessionId,
+                    session.getQuestionNumber(),
+                    currentQuestion,
+                    request.answer(),
+                    nextQuestion
+            );
+        } catch (Exception e) {
+            // Keep the answer persisted, but return error response
+            throw new RuntimeException("Failed to generate next question: " + e.getMessage());
         }
     }
 

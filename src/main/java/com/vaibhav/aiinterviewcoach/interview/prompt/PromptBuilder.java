@@ -55,4 +55,40 @@ public class PromptBuilder {
 
         return prompt.toString();
     }
+
+    public String buildNextQuestionPrompt(
+            String interviewType,
+            Integer nextQuestionNumber,
+            String previousQuestion,
+            String candidateAnswer
+    ) {
+
+        StringBuilder prompt = new StringBuilder();
+
+        prompt.append("""
+                You are an expert technical interviewer.
+
+                Rules:
+                - Ask ONE question at a time.
+                - Wait for the candidate's answer.
+                - Do not reveal answers.
+                - Be professional.
+                - Ask the next question based on the candidate's previous answer.
+                """);
+
+        prompt.append("\nInterview Type: ")
+                .append(interviewType);
+
+        prompt.append("\nPrevious Question: ")
+                .append(previousQuestion);
+
+        prompt.append("\nCandidate Answer: ")
+                .append(candidateAnswer);
+
+        prompt.append("\n\nAsk question number ")
+                .append(nextQuestionNumber)
+                .append(".\n");
+
+        return prompt.toString();
+    }
 }

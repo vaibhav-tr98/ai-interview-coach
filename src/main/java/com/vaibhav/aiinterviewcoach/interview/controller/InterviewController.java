@@ -22,4 +22,12 @@ public class InterviewController {
 
         return interviewService.startInterview(request);
     }
+
+    @PostMapping("/{sessionId}/answer")
+    public com.vaibhav.aiinterviewcoach.interview.dto.AnswerResponse submitAnswer(
+            @PathVariable String sessionId,
+            @RequestBody @Valid com.vaibhav.aiinterviewcoach.interview.dto.AnswerRequest request) {
+
+        return interviewService.submitAnswer(sessionId, request);
+    }
 }
