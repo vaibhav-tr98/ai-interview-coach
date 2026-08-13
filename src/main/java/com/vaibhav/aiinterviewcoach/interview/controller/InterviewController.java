@@ -30,4 +30,11 @@ public class InterviewController {
 
         return interviewService.submitAnswer(sessionId, request);
     }
+
+    @GetMapping("/{sessionId}")
+    public com.vaibhav.aiinterviewcoach.interview.dto.SessionResponse getSession(
+            @PathVariable String sessionId) {
+
+        return interviewService.getSession(sessionId);
+    }
 }

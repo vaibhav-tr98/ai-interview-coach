@@ -16,6 +16,7 @@ import com.vaibhav.aiinterviewcoach.interview.session.SessionStatus;
 import com.vaibhav.aiinterviewcoach.interview.entity.QuestionAnswer;
 import com.vaibhav.aiinterviewcoach.interview.dto.AnswerRequest;
 import com.vaibhav.aiinterviewcoach.interview.dto.AnswerResponse;
+import com.vaibhav.aiinterviewcoach.interview.dto.SessionResponse;
 import com.vaibhav.aiinterviewcoach.repository.UserRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.security.core.Authentication;
@@ -170,6 +171,26 @@ public class InterviewService {
             // Keep the answer persisted, but return error response
             throw new RuntimeException("Failed to generate next question: " + e.getMessage());
         }
+    }
+
+    public SessionResponse getSession(String sessionId) {
+        User currentUser = getCurrentUser();
+
+        InterviewSession session = interviewSessionRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        if (!session.getInterview().getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized to access this session");
+        }
+
+        return new SessionResponse(
+                session.getSessionId(),
+                session.getInterview().getId().toString(),
+                session.getInterview().getType().name(),
+                session.getQuestionNumber(),
+                session.getCurrentQuestion(),
+                session.getStatus().name()
+        );
     }
 
     private String getCurrentUserEmail() {
