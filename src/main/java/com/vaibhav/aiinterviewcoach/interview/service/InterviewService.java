@@ -18,6 +18,8 @@ import com.vaibhav.aiinterviewcoach.interview.dto.AnswerRequest;
 import com.vaibhav.aiinterviewcoach.interview.dto.AnswerResponse;
 import com.vaibhav.aiinterviewcoach.interview.dto.EvaluationResult;
 import com.vaibhav.aiinterviewcoach.interview.dto.SessionResponse;
+import com.vaibhav.aiinterviewcoach.interview.entity.AnswerEvaluation;
+import com.vaibhav.aiinterviewcoach.interview.repository.AnswerEvaluationRepository;
 import com.vaibhav.aiinterviewcoach.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
@@ -33,6 +35,7 @@ public class InterviewService {
     private final InterviewRepository interviewRepository;
     private final InterviewSessionRepository interviewSessionRepository;
     private final QuestionAnswerRepository questionAnswerRepository;
+    private final AnswerEvaluationRepository answerEvaluationRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
@@ -41,6 +44,7 @@ public class InterviewService {
                             InterviewRepository interviewRepository,
                             InterviewSessionRepository interviewSessionRepository,
                             QuestionAnswerRepository questionAnswerRepository,
+                            AnswerEvaluationRepository answerEvaluationRepository,
                             UserRepository userRepository,
                             ObjectMapper objectMapper) {
 
@@ -49,6 +53,7 @@ public class InterviewService {
         this.interviewRepository = interviewRepository;
         this.interviewSessionRepository = interviewSessionRepository;
         this.questionAnswerRepository = questionAnswerRepository;
+        this.answerEvaluationRepository = answerEvaluationRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
     }
@@ -147,6 +152,20 @@ public class InterviewService {
                 .build();
 
         questionAnswerRepository.save(questionAnswer);
+
+        try {
+            EvaluationResult evalResult = evaluateAnswer(currentQuestion, request.answer(), session.getInterview().getType().name());
+            AnswerEvaluation evaluation = AnswerEvaluation.builder()
+                    .questionAnswer(questionAnswer)
+                    .score(evalResult.score())
+                    .feedback(evalResult.feedback())
+                    .strengths(evalResult.strengths())
+                    .weaknesses(evalResult.weaknesses())
+                    .build();
+            answerEvaluationRepository.save(evaluation);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to evaluate answer: " + e.getMessage());
+        }
 
         if (currentQuestionNumber >= 5) {
             session.setStatus(SessionStatus.COMPLETED);
