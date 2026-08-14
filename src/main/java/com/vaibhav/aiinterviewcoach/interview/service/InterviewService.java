@@ -16,8 +16,10 @@ import com.vaibhav.aiinterviewcoach.interview.session.SessionStatus;
 import com.vaibhav.aiinterviewcoach.interview.entity.QuestionAnswer;
 import com.vaibhav.aiinterviewcoach.interview.dto.AnswerRequest;
 import com.vaibhav.aiinterviewcoach.interview.dto.AnswerResponse;
+import com.vaibhav.aiinterviewcoach.interview.dto.EvaluationResult;
 import com.vaibhav.aiinterviewcoach.interview.dto.SessionResponse;
 import com.vaibhav.aiinterviewcoach.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,13 +34,15 @@ public class InterviewService {
     private final InterviewSessionRepository interviewSessionRepository;
     private final QuestionAnswerRepository questionAnswerRepository;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     public InterviewService(ChatClient.Builder builder,
                             PromptBuilder promptBuilder,
                             InterviewRepository interviewRepository,
                             InterviewSessionRepository interviewSessionRepository,
                             QuestionAnswerRepository questionAnswerRepository,
-                            UserRepository userRepository) {
+                            UserRepository userRepository,
+                            ObjectMapper objectMapper) {
 
         this.chatClient = builder.build();
         this.promptBuilder = promptBuilder;
@@ -46,6 +50,7 @@ public class InterviewService {
         this.interviewSessionRepository = interviewSessionRepository;
         this.questionAnswerRepository = questionAnswerRepository;
         this.userRepository = userRepository;
+        this.objectMapper = objectMapper;
     }
 
     public InterviewResponse startInterview(InterviewRequest request) {
@@ -227,5 +232,45 @@ public class InterviewService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
+    }
+
+    public EvaluationResult evaluateAnswer(String question, String answer, String interviewType) {
+        String prompt = promptBuilder.buildAnswerEvaluationPrompt(question, answer, interviewType);
+
+        try {
+            String jsonResponse = chatClient.prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
+
+            if (jsonResponse != null) {
+                jsonResponse = jsonResponse.trim();
+                if (jsonResponse.startsWith("```json")) {
+                    jsonResponse = jsonResponse.substring(7);
+                } else if (jsonResponse.startsWith("```")) {
+                    jsonResponse = jsonResponse.substring(3);
+                }
+                if (jsonResponse.endsWith("```")) {
+                    jsonResponse = jsonResponse.substring(0, jsonResponse.length() - 3);
+                }
+                jsonResponse = jsonResponse.trim();
+            }
+
+            EvaluationResult result = objectMapper.readValue(jsonResponse, EvaluationResult.class);
+
+            if (result.score() == null || result.score() < 0 || result.score() > 100) {
+                throw new RuntimeException("Invalid score in evaluation: " + result.score());
+            }
+            if (result.feedback() == null || result.feedback().isBlank() ||
+                result.strengths() == null || result.strengths().isBlank() ||
+                result.weaknesses() == null || result.weaknesses().isBlank()) {
+                throw new RuntimeException("Missing required text fields in evaluation");
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            throw new RuntimeException("AI evaluation failed to produce a valid result.");
+        }
     }
 }
