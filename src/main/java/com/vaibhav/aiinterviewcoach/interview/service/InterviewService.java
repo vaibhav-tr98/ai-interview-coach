@@ -16,6 +16,7 @@ import com.vaibhav.aiinterviewcoach.interview.session.SessionStatus;
 import com.vaibhav.aiinterviewcoach.interview.entity.QuestionAnswer;
 import com.vaibhav.aiinterviewcoach.interview.dto.AnswerRequest;
 import com.vaibhav.aiinterviewcoach.interview.dto.AnswerResponse;
+import com.vaibhav.aiinterviewcoach.interview.dto.EvaluationResponse;
 import com.vaibhav.aiinterviewcoach.interview.dto.EvaluationResult;
 import com.vaibhav.aiinterviewcoach.interview.dto.SessionResponse;
 import com.vaibhav.aiinterviewcoach.interview.entity.AnswerEvaluation;
@@ -153,6 +154,7 @@ public class InterviewService {
 
         questionAnswerRepository.save(questionAnswer);
 
+        EvaluationResponse evaluationResponse;
         try {
             EvaluationResult evalResult = evaluateAnswer(currentQuestion, request.answer(), session.getInterview().getType().name());
             AnswerEvaluation evaluation = AnswerEvaluation.builder()
@@ -163,6 +165,13 @@ public class InterviewService {
                     .weaknesses(evalResult.weaknesses())
                     .build();
             answerEvaluationRepository.save(evaluation);
+
+            evaluationResponse = new EvaluationResponse(
+                    evaluation.getScore(),
+                    evaluation.getFeedback(),
+                    evaluation.getStrengths(),
+                    evaluation.getWeaknesses()
+            );
         } catch (Exception e) {
             throw new RuntimeException("Failed to evaluate answer: " + e.getMessage());
         }
@@ -181,6 +190,7 @@ public class InterviewService {
                     currentQuestionNumber,
                     currentQuestion,
                     request.answer(),
+                    evaluationResponse,
                     null,
                     true
             );
@@ -208,6 +218,7 @@ public class InterviewService {
                     session.getQuestionNumber(),
                     currentQuestion,
                     request.answer(),
+                    evaluationResponse,
                     nextQuestion,
                     false
             );
