@@ -37,4 +37,11 @@ public class InterviewController {
 
         return interviewService.getSession(sessionId);
     }
+
+    @GetMapping("/{sessionId}/result")
+    public com.vaibhav.aiinterviewcoach.interview.dto.FinalInterviewResponse getFinalResult(
+            @PathVariable String sessionId) {
+
+        return interviewService.getFinalResult(sessionId);
+    }
 }

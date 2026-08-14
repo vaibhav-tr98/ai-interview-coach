@@ -248,6 +248,59 @@ public class InterviewService {
         );
     }
 
+    public com.vaibhav.aiinterviewcoach.interview.dto.FinalInterviewResponse getFinalResult(String sessionId) {
+        User currentUser = getCurrentUser();
+
+        InterviewSession session = interviewSessionRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        if (!session.getInterview().getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized to access this session");
+        }
+
+        if (session.getStatus() != SessionStatus.COMPLETED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.CONFLICT, "Interview is not completed yet"
+            );
+        }
+
+        java.util.List<AnswerEvaluation> evaluations = answerEvaluationRepository.findByQuestionAnswerSessionSessionId(sessionId);
+
+        if (evaluations.size() < 5) {
+            throw new RuntimeException("Missing evaluations for completed interview");
+        }
+
+        double totalScore = 0;
+        java.util.List<String> strengths = new java.util.ArrayList<>();
+        java.util.List<String> weaknesses = new java.util.ArrayList<>();
+        java.util.List<String> recommendations = new java.util.ArrayList<>();
+
+        for (AnswerEvaluation eval : evaluations) {
+            totalScore += eval.getScore();
+            
+            if (eval.getStrengths() != null && !strengths.contains(eval.getStrengths())) {
+                strengths.add(eval.getStrengths());
+            }
+            if (eval.getWeaknesses() != null && !weaknesses.contains(eval.getWeaknesses())) {
+                weaknesses.add(eval.getWeaknesses());
+                recommendations.add("Consider improving on: " + eval.getWeaknesses());
+            }
+        }
+
+        int overallScore = (int) Math.round(totalScore / evaluations.size());
+
+        return new com.vaibhav.aiinterviewcoach.interview.dto.FinalInterviewResponse(
+                sessionId,
+                session.getInterview().getId().toString(),
+                session.getInterview().getType().name(),
+                5,
+                overallScore,
+                strengths,
+                weaknesses,
+                recommendations
+        );
+    }
+
     private String getCurrentUserEmail() {
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
