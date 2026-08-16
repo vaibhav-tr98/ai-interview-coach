@@ -162,14 +162,17 @@ public class InterviewService {
         User currentUser = getCurrentUser();
 
         InterviewSession session = interviewSessionRepository.findBySessionId(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Session not found"));
 
         if (!session.getInterview().getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Unauthorized to access this session");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized to access this session");
         }
 
         if (session.getStatus() == SessionStatus.COMPLETED) {
-            throw new RuntimeException("Session is already completed");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Session is already completed");
         }
 
         Interview interview = session.getInterview();
@@ -329,10 +332,12 @@ public class InterviewService {
         User currentUser = getCurrentUser();
 
         InterviewSession session = interviewSessionRepository.findBySessionId(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Session not found"));
 
         if (!session.getInterview().getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Unauthorized to access this session");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized to access this session");
         }
 
         return new SessionResponse(
@@ -349,10 +354,12 @@ public class InterviewService {
         User currentUser = getCurrentUser();
 
         InterviewSession session = interviewSessionRepository.findBySessionId(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Session not found"));
 
         if (!session.getInterview().getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Unauthorized to access this session");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized to access this session");
         }
 
         if (session.getStatus() != SessionStatus.COMPLETED) {
@@ -364,7 +371,8 @@ public class InterviewService {
         java.util.List<AnswerEvaluation> evaluations = answerEvaluationRepository.findByQuestionAnswerSessionSessionId(sessionId);
 
         if (evaluations.size() < 5) {
-            throw new RuntimeException("Missing evaluations for completed interview");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Missing evaluations for completed interview");
         }
 
         double totalScore = 0;
