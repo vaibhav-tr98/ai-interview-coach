@@ -5,8 +5,13 @@ import com.vaibhav.aiinterviewcoach.interview.dto.InterviewRequest;
 import com.vaibhav.aiinterviewcoach.interview.dto.InterviewResponse;
 import com.vaibhav.aiinterviewcoach.interview.entity.Interview;
 import com.vaibhav.aiinterviewcoach.interview.enums.Difficulty;
+import com.vaibhav.aiinterviewcoach.interview.enums.DsaTopic;
+import com.vaibhav.aiinterviewcoach.interview.enums.InterviewerPersona;
 import com.vaibhav.aiinterviewcoach.interview.enums.InterviewStatus;
 import com.vaibhav.aiinterviewcoach.interview.enums.InterviewType;
+import com.vaibhav.aiinterviewcoach.interview.prompt.InterviewContext;
+import com.vaibhav.aiinterviewcoach.interview.prompt.InterviewState;
+import com.vaibhav.aiinterviewcoach.interview.prompt.InterviewTurnContext;
 import com.vaibhav.aiinterviewcoach.interview.prompt.PromptBuilder;
 import com.vaibhav.aiinterviewcoach.interview.repository.InterviewRepository;
 import com.vaibhav.aiinterviewcoach.interview.repository.QuestionAnswerRepository;
@@ -27,6 +32,11 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class InterviewService {
@@ -61,33 +71,53 @@ public class InterviewService {
 
     public InterviewResponse startInterview(InterviewRequest request) {
 
-        // Get the currently logged-in user
         User currentUser = getCurrentUser();
+        
+        Difficulty difficulty = Difficulty.MEDIUM;
+        if (request.dsaDifficulty() != null) {
+            try {
+                difficulty = Difficulty.valueOf(request.dsaDifficulty().toUpperCase());
+            } catch (IllegalArgumentException ignored) {}
+        }
+        
+        DsaTopic dsaTopic = null;
+        if (request.dsaTopic() != null) {
+            try {
+                dsaTopic = DsaTopic.valueOf(request.dsaTopic().toUpperCase());
+            } catch (IllegalArgumentException ignored) {}
+        }
+        
+        InterviewerPersona persona = null;
+        if (request.interviewerPersona() != null) {
+            try {
+                persona = InterviewerPersona.valueOf(request.interviewerPersona().toUpperCase());
+            } catch (IllegalArgumentException ignored) {}
+        }
 
-        // Create Interview entity
         Interview interview = Interview.builder()
                 .title(request.interviewType() + " Interview")
                 .type(InterviewType.valueOf(request.interviewType().toUpperCase()))
-                .difficulty(Difficulty.MEDIUM)
+                .difficulty(difficulty)
                 .status(InterviewStatus.CREATED)
                 .user(currentUser)
+                .role(request.role())
+                .experienceLevel(request.experienceLevel())
+                .dsaTopic(dsaTopic)
+                .resumeText(request.resume())
+                .jobDescription(request.jobDescription())
+                .projectDescription(request.projectDescription())
+                .projectUrl(request.projectUrl())
+                .durationMinutes(request.durationMinutes())
+                .interviewerPersona(persona)
                 .build();
 
-        // Save interview in database
         interview = interviewRepository.save(interview);
 
-        // Build AI prompt
-        String prompt = promptBuilder.buildPrompt(
-                request.interviewType(),
-                request.experienceLevel(),
-                request.resume(),
-                request.jobDescription(),
-                request.projectDescription()
-        );
+        InterviewContext context = buildContext(interview);
+        String prompt = promptBuilder.buildInitialQuestionPrompt(context);
 
         try {
 
-            // Generate AI question
             String question = chatClient.prompt()
                     .user(prompt)
                     .call()
@@ -142,8 +172,22 @@ public class InterviewService {
             throw new RuntimeException("Session is already completed");
         }
 
+        Interview interview = session.getInterview();
+        
+        // Enforce duration
+        if (interview.getDurationMinutes() != null && session.getCreatedAt() != null) {
+            LocalDateTime expiresAt = session.getCreatedAt().plusMinutes(interview.getDurationMinutes());
+            if (LocalDateTime.now().isAfter(expiresAt)) {
+                completeInterview(session, interview);
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.CONFLICT, "Interview duration has expired."
+                );
+            }
+        }
+
         String currentQuestion = session.getCurrentQuestion();
         Integer currentQuestionNumber = session.getQuestionNumber();
+        InterviewContext context = buildContext(interview);
 
         QuestionAnswer questionAnswer = QuestionAnswer.builder()
                 .session(session)
@@ -156,7 +200,7 @@ public class InterviewService {
 
         EvaluationResponse evaluationResponse;
         try {
-            EvaluationResult evalResult = evaluateAnswer(currentQuestion, request.answer(), session.getInterview().getType().name());
+            EvaluationResult evalResult = evaluateAnswer(currentQuestion, request.answer(), context);
             AnswerEvaluation evaluation = AnswerEvaluation.builder()
                     .questionAnswer(questionAnswer)
                     .score(evalResult.score())
@@ -177,13 +221,7 @@ public class InterviewService {
         }
 
         if (currentQuestionNumber >= 5) {
-            session.setStatus(SessionStatus.COMPLETED);
-            session.setCurrentQuestion(null);
-            interviewSessionRepository.save(session);
-
-            Interview interview = session.getInterview();
-            interview.setStatus(InterviewStatus.COMPLETED);
-            interviewRepository.save(interview);
+            completeInterview(session, interview);
 
             return new AnswerResponse(
                     sessionId,
@@ -196,11 +234,17 @@ public class InterviewService {
             );
         }
 
+        List<InterviewTurnContext> history = fetchHistory(session.getSessionId());
+
+        InterviewState state = InterviewState.builder()
+                .nextQuestionNumber(currentQuestionNumber + 1)
+                .totalQuestions(5)
+                .build();
+
         String prompt = promptBuilder.buildNextQuestionPrompt(
-                session.getInterview().getType().name(),
-                currentQuestionNumber + 1,
-                currentQuestion,
-                request.answer()
+                context,
+                state,
+                history
         );
 
         try {
@@ -223,9 +267,62 @@ public class InterviewService {
                     false
             );
         } catch (Exception e) {
-            // Keep the answer persisted, but return error response
             throw new RuntimeException("Failed to generate next question: " + e.getMessage());
         }
+    }
+
+    private void completeInterview(InterviewSession session, Interview interview) {
+        session.setStatus(SessionStatus.COMPLETED);
+        session.setCurrentQuestion(null);
+        interviewSessionRepository.save(session);
+        
+        interview.setStatus(InterviewStatus.COMPLETED);
+        interview.setCompletedAt(LocalDateTime.now());
+        interviewRepository.save(interview);
+    }
+    
+    private List<InterviewTurnContext> fetchHistory(String sessionId) {
+        List<QuestionAnswer> qaList = questionAnswerRepository.findBySessionSessionIdOrderByQuestionNumberAsc(sessionId);
+        List<InterviewTurnContext> history = new ArrayList<>();
+        
+        for (QuestionAnswer qa : qaList) {
+            Optional<AnswerEvaluation> evalOpt = answerEvaluationRepository.findByQuestionAnswerId(qa.getId());
+            if (evalOpt.isPresent()) {
+                AnswerEvaluation eval = evalOpt.get();
+                history.add(InterviewTurnContext.builder()
+                        .questionNumber(qa.getQuestionNumber())
+                        .question(qa.getQuestion())
+                        .answer(qa.getAnswer())
+                        .evaluationScore(eval.getScore())
+                        .evaluationFeedback(eval.getFeedback())
+                        .evaluationStrengths(eval.getStrengths())
+                        .evaluationWeaknesses(eval.getWeaknesses())
+                        .build());
+            } else {
+                history.add(InterviewTurnContext.builder()
+                        .questionNumber(qa.getQuestionNumber())
+                        .question(qa.getQuestion())
+                        .answer(qa.getAnswer())
+                        .build());
+            }
+        }
+        return history;
+    }
+    
+    private InterviewContext buildContext(Interview interview) {
+        return InterviewContext.builder()
+                .interviewType(interview.getType())
+                .role(interview.getRole())
+                .experienceLevel(interview.getExperienceLevel())
+                .difficulty(interview.getDifficulty())
+                .dsaTopic(interview.getDsaTopic())
+                .resumeText(interview.getResumeText())
+                .jobDescription(interview.getJobDescription())
+                .projectDescription(interview.getProjectDescription())
+                .projectUrl(interview.getProjectUrl())
+                .durationMinutes(interview.getDurationMinutes())
+                .interviewerPersona(interview.getInterviewerPersona())
+                .build();
     }
 
     public SessionResponse getSession(String sessionId) {
@@ -317,8 +414,8 @@ public class InterviewService {
                         new RuntimeException("User not found"));
     }
 
-    public EvaluationResult evaluateAnswer(String question, String answer, String interviewType) {
-        String prompt = promptBuilder.buildAnswerEvaluationPrompt(question, answer, interviewType);
+    public EvaluationResult evaluateAnswer(String question, String answer, InterviewContext context) {
+        String prompt = promptBuilder.buildAnswerEvaluationPrompt(question, answer, context);
 
         try {
             String jsonResponse = chatClient.prompt()

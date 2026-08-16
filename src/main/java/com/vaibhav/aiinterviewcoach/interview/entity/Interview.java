@@ -45,6 +45,34 @@ public class Interview {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Column(columnDefinition = "TEXT")
+    private String role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dsa_topic")
+    private com.vaibhav.aiinterviewcoach.interview.enums.DsaTopic dsaTopic;
+
+    @Column(columnDefinition = "TEXT")
+    private String resumeText;
+
+    @Column(columnDefinition = "TEXT")
+    private String jobDescription;
+
+    @Column(columnDefinition = "TEXT")
+    private String projectDescription;
+
+    private String projectUrl;
+
+    private Integer durationMinutes;
+
+    @Enumerated(EnumType.STRING)
+    private com.vaibhav.aiinterviewcoach.interview.enums.InterviewerPersona interviewerPersona;
+
+    private String experienceLevel;
+
+    private LocalDateTime completedAt;
+
+
     @PrePersist
     public void onCreate() {
         createdAt = LocalDateTime.now();
