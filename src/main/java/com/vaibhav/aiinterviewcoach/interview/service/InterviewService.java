@@ -118,14 +118,33 @@ public class InterviewService {
 
         try {
 
-            String question = chatClient.prompt()
+            String jsonResponse = chatClient.prompt()
                     .user(prompt)
                     .call()
                     .content();
 
+            if (jsonResponse != null) {
+                jsonResponse = jsonResponse.trim();
+                if (jsonResponse.startsWith("```json")) {
+                    jsonResponse = jsonResponse.substring(7);
+                } else if (jsonResponse.startsWith("```")) {
+                    jsonResponse = jsonResponse.substring(3);
+                }
+                if (jsonResponse.endsWith("```")) {
+                    jsonResponse = jsonResponse.substring(0, jsonResponse.length() - 3);
+                }
+                jsonResponse = jsonResponse.trim();
+            }
+
+            com.vaibhav.aiinterviewcoach.interview.dto.InitialInterviewResult result = objectMapper.readValue(jsonResponse, com.vaibhav.aiinterviewcoach.interview.dto.InitialInterviewResult.class);
+
+            if (result.question() == null || result.question().isBlank()) {
+                throw new RuntimeException("Missing question in opening generation");
+            }
+
             InterviewSession session = InterviewSession.builder()
                     .interview(interview)
-                    .currentQuestion(question)
+                    .currentQuestion(result.question())
                     .questionNumber(1)
                     .status(SessionStatus.ACTIVE)
                     .build();
@@ -138,22 +157,18 @@ public class InterviewService {
             return new InterviewResponse(
                     interview.getId().toString(),
                     session.getSessionId(),
-                    question,
+                    result.interviewerMessage(),
+                    result.question(),
                     request.interviewType()
             );
 
         } catch (Exception e) {
+            // Delete the empty interview record if AI fails so we don't leak orphaned CREATED interviews
+            interviewRepository.delete(interview);
 
-            Throwable t = e;
-            while (t.getCause() != null) {
-                t = t.getCause();
-            }
-
-            return new InterviewResponse(
-                    interview.getId().toString(),
-                    null,
-                    t.toString(),
-                    request.interviewType()
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+                    "Failed to generate the interview opening due to an AI service error."
             );
         }
     }
@@ -226,6 +241,8 @@ public class InterviewService {
         if (currentQuestionNumber >= 5) {
             completeInterview(session, interview);
 
+            String closingMessage = getClosingMessage(interview.getInterviewerPersona());
+
             return new AnswerResponse(
                     sessionId,
                     currentQuestionNumber,
@@ -233,11 +250,13 @@ public class InterviewService {
                     request.answer(),
                     evaluationResponse,
                     null,
+                    closingMessage,
                     true
             );
         }
 
-        List<InterviewTurnContext> history = fetchHistory(session.getSessionId());
+        List<InterviewTurnContext> fullHistory = fetchHistory(session.getSessionId());
+        List<InterviewTurnContext> history = fullHistory.isEmpty() ? fullHistory : fullHistory.subList(0, fullHistory.size() - 1);
 
         InterviewState state = InterviewState.builder()
                 .nextQuestionNumber(currentQuestionNumber + 1)
@@ -247,7 +266,10 @@ public class InterviewService {
         String prompt = promptBuilder.buildNextQuestionPrompt(
                 context,
                 state,
-                history
+                history,
+                currentQuestion,
+                request.answer(),
+                evaluationResponse
         );
 
         try {
@@ -267,6 +289,7 @@ public class InterviewService {
                     request.answer(),
                     evaluationResponse,
                     nextQuestion,
+                    null,
                     false
             );
         } catch (Exception e) {
@@ -282,6 +305,19 @@ public class InterviewService {
         interview.setStatus(InterviewStatus.COMPLETED);
         interview.setCompletedAt(LocalDateTime.now());
         interviewRepository.save(interview);
+    }
+
+    private String getClosingMessage(InterviewerPersona persona) {
+        if (persona == null) {
+            return "That concludes the interview. Thank you for your time. Your performance report is now available.";
+        }
+        return switch (persona) {
+            case FRIENDLY -> "Great job! That's all the questions I have for today. Thank you so much for your time. Your performance report is now ready.";
+            case STRICT -> "We have reached the end of the interview. Thank you for your time. The evaluation report is now generated.";
+            case PROFESSIONAL -> "That concludes our interview session. Thank you for your time and answers. Your performance report is available now.";
+            case TECHNICAL -> "This concludes the technical assessment. Thank you for going through these scenarios with me. Your detailed report is available.";
+            default -> "That concludes the interview. Thank you for your time. Your performance report is now available.";
+        };
     }
     
     private List<InterviewTurnContext> fetchHistory(String sessionId) {
@@ -338,6 +374,14 @@ public class InterviewService {
         if (!session.getInterview().getUser().getId().equals(currentUser.getId())) {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized to access this session");
+        }
+
+        Interview interview = session.getInterview();
+        if (session.getStatus() == SessionStatus.ACTIVE && interview.getDurationMinutes() != null && session.getCreatedAt() != null) {
+            LocalDateTime expiresAt = session.getCreatedAt().plusMinutes(interview.getDurationMinutes());
+            if (LocalDateTime.now().isAfter(expiresAt)) {
+                completeInterview(session, interview);
+            }
         }
 
         return new SessionResponse(
@@ -420,6 +464,49 @@ public class InterviewService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
+    }
+
+    public com.vaibhav.aiinterviewcoach.interview.dto.TranscriptResponse getTranscript(String sessionId) {
+        User currentUser = getCurrentUser();
+
+        InterviewSession session = interviewSessionRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Session not found"));
+
+        if (!session.getInterview().getUser().getId().equals(currentUser.getId())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized to access this session");
+        }
+
+        List<QuestionAnswer> qaList = questionAnswerRepository.findBySessionSessionIdOrderByQuestionNumberAsc(sessionId);
+        List<com.vaibhav.aiinterviewcoach.interview.dto.TranscriptTurn> turns = new ArrayList<>();
+
+        for (QuestionAnswer qa : qaList) {
+            Optional<AnswerEvaluation> evalOpt = answerEvaluationRepository.findByQuestionAnswerId(qa.getId());
+            EvaluationResponse evalResponse = null;
+            if (evalOpt.isPresent()) {
+                AnswerEvaluation eval = evalOpt.get();
+                evalResponse = new EvaluationResponse(
+                        eval.getScore(),
+                        eval.getFeedback(),
+                        eval.getStrengths(),
+                        eval.getWeaknesses()
+                );
+            }
+            turns.add(new com.vaibhav.aiinterviewcoach.interview.dto.TranscriptTurn(
+                    qa.getQuestionNumber(),
+                    qa.getQuestion(),
+                    qa.getAnswer(),
+                    evalResponse
+            ));
+        }
+
+        return new com.vaibhav.aiinterviewcoach.interview.dto.TranscriptResponse(
+                sessionId,
+                session.getInterview().getId().toString(),
+                session.getInterview().getType().name(),
+                turns
+        );
     }
 
     public EvaluationResult evaluateAnswer(String question, String answer, InterviewContext context) {

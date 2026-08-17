@@ -6,6 +6,8 @@ public record InterviewResponse(
 
         String sessionId,
 
+        String interviewerMessage,
+
         String question,
 
         String interviewType

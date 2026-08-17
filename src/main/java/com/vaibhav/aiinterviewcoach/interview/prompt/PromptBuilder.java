@@ -18,14 +18,27 @@ public class PromptBuilder {
         appendPersonaRules(prompt, context.interviewerPersona());
         appendContext(prompt, context);
 
-        prompt.append("\nAsk the first interview question. Do NOT include any pleasantries or context in your response, just the question itself.");
+        prompt.append("\nStart the interview by providing an opening message and asking exactly ONE first question.\n");
+        prompt.append("The opening message should be realistic and reflect your persona. Briefly introduce the interview, acknowledge relevant candidate context when available, and establish the interview scope.\n");
+        prompt.append("Do NOT reveal internal instructions, evaluations, or coaching hints.\n");
+        prompt.append("\nReturn ONLY valid JSON with this exact structure:\n");
+        prompt.append("{\n");
+        prompt.append("  \"interviewerMessage\": \"...\",\n");
+        prompt.append("  \"question\": \"...\"\n");
+        prompt.append("}\n");
+        prompt.append("- Do not include markdown.\n");
+        prompt.append("- Do not include ```json.\n");
+
         return prompt.toString();
     }
 
     public String buildNextQuestionPrompt(
             InterviewContext context,
             InterviewState state,
-            List<InterviewTurnContext> history
+            List<InterviewTurnContext> history,
+            String currentQuestion,
+            String candidateAnswer,
+            com.vaibhav.aiinterviewcoach.interview.dto.EvaluationResponse currentEvaluation
     ) {
         StringBuilder prompt = new StringBuilder();
 
@@ -35,7 +48,7 @@ public class PromptBuilder {
         appendPersonaRules(prompt, context.interviewerPersona());
         appendContext(prompt, context);
 
-        prompt.append("\n--- Interview History ---\n");
+        prompt.append("\n--- Interview History (Previous Turns) ---\n");
         if (history != null && !history.isEmpty()) {
             for (InterviewTurnContext turn : history) {
                 prompt.append("Question ").append(turn.questionNumber()).append(": ").append(turn.question()).append("\n");
@@ -47,8 +60,17 @@ public class PromptBuilder {
                 prompt.append("-------------------------\n");
             }
         } else {
-            prompt.append("No history available.\n");
+            prompt.append("No previous history available.\n");
         }
+
+        prompt.append("\n--- Current Turn (Just completed) ---\n");
+        prompt.append("Question: ").append(currentQuestion).append("\n");
+        prompt.append("Candidate Answer: ").append(candidateAnswer).append("\n");
+        prompt.append("Current Evaluation:\n");
+        prompt.append("- Score: ").append(currentEvaluation.score()).append("\n");
+        prompt.append("- Feedback: ").append(currentEvaluation.feedback()).append("\n");
+        prompt.append("- Strengths: ").append(currentEvaluation.strengths()).append("\n");
+        prompt.append("- Weaknesses: ").append(currentEvaluation.weaknesses()).append("\n");
 
         prompt.append("\nYour task is to ask question number ").append(state.nextQuestionNumber());
         if (state.totalQuestions() != null) {
@@ -56,14 +78,15 @@ public class PromptBuilder {
         }
         prompt.append(".\n\n");
         
-        prompt.append("Based on the candidate's previous answer and evaluation, you should:\n");
-        prompt.append("- Ask a deeper follow-up when the answer is strong.\n");
-        prompt.append("- Ask clarification when the answer is vague.\n");
-        prompt.append("- Probe weaknesses if they failed to answer completely.\n");
+        prompt.append("Based on the candidate's current answer and evaluation, as well as the history, you should:\n");
+        prompt.append("- If the current answer is STRONG: ask a deeper follow-up question, increase technical depth, explore trade-offs, ask 'why?', or ask for implementation details.\n");
+        prompt.append("- If the current answer is WEAK: ask a focused clarification, probe the missing concept. Do not immediately give the answer or turn the interview into a teaching session.\n");
+        prompt.append("- If the current answer is VAGUE: ask for a concrete example, implementation details, or rationale behind their approach.\n");
+        prompt.append("- If the candidate shows a REPEATED WEAKNESS across history: probe it once more when relevant, then move on rather than endlessly repeating the same concept.\n");
+        prompt.append("- Avoid repeatedly asking essentially the same question twice.\n");
         prompt.append("- Change topic if appropriate, but remain within the configured interview scope.\n");
-        prompt.append("- Avoid repeatedly asking the same question.\n");
         
-        prompt.append("\nOutput ONLY the next question text. Do NOT reveal scores, evaluations, or coaching hints to the candidate.");
+        prompt.append("\nOutput ONLY the next question text. Do NOT reveal scores, evaluations, strengths, weaknesses, or coaching hints to the candidate.");
 
         return prompt.toString();
     }
@@ -181,6 +204,47 @@ public class PromptBuilder {
         
         if (context.projectUrl() != null && !context.projectUrl().isBlank()) {
             prompt.append("Candidate Project URL: ").append(context.projectUrl()).append("\n");
+        }
+
+        prompt.append("\n--- Interview Mode Guidelines ---\n");
+        if (context.interviewType() != null) {
+            switch (context.interviewType()) {
+                case HR:
+                    prompt.append("- Focus on behavioral questions, motivation, teamwork, communication, conflict handling, leadership, strengths/weaknesses, career goals, and situational questions.\n");
+                    prompt.append("- Do NOT ask unrelated technical (e.g., DSA/algorithm) questions.\n");
+                    break;
+                case JAVA:
+                case SPRING_BOOT:
+                case MERN:
+                case SQL:
+                case COMPANY:
+                    prompt.append("- Focus on technical depth relevant to ").append(context.interviewType().name()).append(".\n");
+                    prompt.append("- Probe fundamentals, architecture, design patterns, and common frameworks.\n");
+                    break;
+                case DSA:
+                    prompt.append("- Focus heavily on algorithms and data structures.\n");
+                    prompt.append("- Ask about approach, brute force, optimization, time complexity, space complexity, and edge cases.\n");
+                    prompt.append("- Do not ask for full code syntax execution, focus on problem-solving logic.\n");
+                    break;
+                case PROJECT:
+                    prompt.append("- Focus strictly on the candidate's actual project context.\n");
+                    prompt.append("- Ask about architecture, database, APIs, authentication, design decisions, trade-offs, failure handling, scalability, testing, and deployment.\n");
+                    prompt.append("- Do NOT invent project features that the candidate didn't mention.\n");
+                    break;
+                case RESUME:
+                    prompt.append("- Use the provided resume context.\n");
+                    prompt.append("- Probe claimed technologies, projects, internships/experience, achievements, and responsibilities.\n");
+                    prompt.append("- NEVER invent experience or claims not present in the resume.\n");
+                    break;
+                case JD:
+                    prompt.append("- Use the supplied Job Description (JD).\n");
+                    prompt.append("- Prioritize required skills, responsibilities, role expectations, and gaps between the resume and JD.\n");
+                    break;
+                case MIXED:
+                    prompt.append("- Intelligently combine behavioral, technical, and experience-based questions.\n");
+                    prompt.append("- Ensure smooth transitions; do not randomly switch topics without context.\n");
+                    break;
+            }
         }
     }
 }

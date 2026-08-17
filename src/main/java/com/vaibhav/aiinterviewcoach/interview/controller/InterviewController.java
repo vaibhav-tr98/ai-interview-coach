@@ -44,4 +44,11 @@ public class InterviewController {
 
         return interviewService.getFinalResult(sessionId);
     }
+
+    @GetMapping("/{sessionId}/transcript")
+    public com.vaibhav.aiinterviewcoach.interview.dto.TranscriptResponse getTranscript(
+            @PathVariable String sessionId) {
+
+        return interviewService.getTranscript(sessionId);
+    }
 }

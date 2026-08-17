@@ -10,6 +10,8 @@ public enum InterviewType {
     MERN,
     RESUME,
     PROJECT,
-    COMPANY
+    COMPANY,
+    JD,
+    MIXED
 
 }

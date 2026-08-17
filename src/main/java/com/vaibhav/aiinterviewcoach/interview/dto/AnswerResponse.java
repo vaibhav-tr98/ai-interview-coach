@@ -7,6 +7,7 @@ public record AnswerResponse(
         String answer,
         EvaluationResponse evaluation,
         String nextQuestion,
+        String closingMessage,
         Boolean completed
 ) {
 }
