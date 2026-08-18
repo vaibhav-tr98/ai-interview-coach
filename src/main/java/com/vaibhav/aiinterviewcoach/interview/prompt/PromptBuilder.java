@@ -94,8 +94,10 @@ public class PromptBuilder {
     public String buildAnswerEvaluationPrompt(
             String question,
             String answer,
-            InterviewContext context
+            InterviewContext context,
+            List<String> allowedSkills
     ) {
+        String allowedSkillsStr = allowedSkills != null ? String.join(", ", allowedSkills) : "";
         return """
                 You are an expert technical interviewer. Evaluate the following candidate answer objectively.
 
@@ -105,12 +107,21 @@ public class PromptBuilder {
                 Question: %s
                 Candidate Answer: %s
 
+                Allowed Canonical Skills to extract: [%s]
+
                 Return ONLY valid JSON with this exact structure:
                 {
                   "score": 0,
                   "feedback": "...",
                   "strengths": "...",
-                  "weaknesses": "..."
+                  "weaknesses": "...",
+                  "skills": [
+                    {
+                      "skill": "SKILL_NAME",
+                      "score": 85,
+                      "relevance": 90
+                    }
+                  ]
                 }
 
                 Rules:
@@ -118,6 +129,9 @@ public class PromptBuilder {
                 - feedback should briefly explain the quality/correctness of the answer.
                 - strengths should identify what the candidate did well.
                 - weaknesses should identify missing, incorrect, or weak areas.
+                - skills array must map the candidate's answer to the Allowed Canonical Skills listed above.
+                - For each identified skill, assign a skill score (0-100) and a relevance score (0-100).
+                - MUST ONLY USE CANONICAL SKILL NAMES provided in the allowed list. NEVER invent arbitrary skill names. If none apply, return an empty array.
                 - Do not include markdown.
                 - Do not include ```json.
                 - Do not add fields outside the specified structure.
@@ -127,7 +141,8 @@ public class PromptBuilder {
                 context.role() != null ? context.role() : "N/A",
                 context.experienceLevel(),
                 question,
-                answer
+                answer,
+                allowedSkillsStr
         );
     }
 

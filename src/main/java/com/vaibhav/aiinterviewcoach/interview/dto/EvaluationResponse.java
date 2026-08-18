@@ -4,6 +4,7 @@ public record EvaluationResponse(
         Integer score,
         String feedback,
         String strengths,
-        String weaknesses
+        String weaknesses,
+        java.util.List<SkillEvaluationDTO> skills
 ) {
 }

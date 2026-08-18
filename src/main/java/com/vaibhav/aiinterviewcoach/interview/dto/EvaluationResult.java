@@ -18,6 +18,8 @@ public record EvaluationResult(
         String strengths,
 
         @NotBlank(message = "Weaknesses must not be blank")
-        String weaknesses
+        String weaknesses,
+        
+        java.util.List<SkillEvaluationDTO> skills
 ) {
 }

@@ -49,6 +49,8 @@ public class InterviewService {
     private final AnswerEvaluationRepository answerEvaluationRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final com.vaibhav.aiinterviewcoach.progress.service.ProgressService progressService;
+    private final com.vaibhav.aiinterviewcoach.progress.repository.SkillRepository skillRepository;
 
     public InterviewService(ChatClient.Builder builder,
                             PromptBuilder promptBuilder,
@@ -57,7 +59,9 @@ public class InterviewService {
                             QuestionAnswerRepository questionAnswerRepository,
                             AnswerEvaluationRepository answerEvaluationRepository,
                             UserRepository userRepository,
-                            ObjectMapper objectMapper) {
+                            ObjectMapper objectMapper,
+                            com.vaibhav.aiinterviewcoach.progress.service.ProgressService progressService,
+                            com.vaibhav.aiinterviewcoach.progress.repository.SkillRepository skillRepository) {
 
         this.chatClient = builder.build();
         this.promptBuilder = promptBuilder;
@@ -67,6 +71,8 @@ public class InterviewService {
         this.answerEvaluationRepository = answerEvaluationRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.progressService = progressService;
+        this.skillRepository = skillRepository;
     }
 
     public InterviewResponse startInterview(InterviewRequest request) {
@@ -218,7 +224,8 @@ public class InterviewService {
 
         EvaluationResponse evaluationResponse;
         try {
-            EvaluationResult evalResult = evaluateAnswer(currentQuestion, request.answer(), context);
+            List<String> allowedSkills = skillRepository.findAll().stream().map(com.vaibhav.aiinterviewcoach.progress.entity.Skill::getName).toList();
+            EvaluationResult evalResult = evaluateAnswer(currentQuestion, request.answer(), context, allowedSkills);
             AnswerEvaluation evaluation = AnswerEvaluation.builder()
                     .questionAnswer(questionAnswer)
                     .score(evalResult.score())
@@ -227,12 +234,22 @@ public class InterviewService {
                     .weaknesses(evalResult.weaknesses())
                     .build();
             answerEvaluationRepository.save(evaluation);
+            
+            try {
+                if (evalResult.skills() != null && !evalResult.skills().isEmpty()) {
+                    progressService.processAnswerSkills(currentUser, questionAnswer, evalResult.skills());
+                }
+            } catch (Exception e) {
+                // Log and swallow progress errors to avoid breaking the core interview
+                System.err.println("Progress processing failed: " + e.getMessage());
+            }
 
             evaluationResponse = new EvaluationResponse(
                     evaluation.getScore(),
                     evaluation.getFeedback(),
                     evaluation.getStrengths(),
-                    evaluation.getWeaknesses()
+                    evaluation.getWeaknesses(),
+                    evalResult.skills()
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to evaluate answer: " + e.getMessage());
@@ -490,7 +507,8 @@ public class InterviewService {
                         eval.getScore(),
                         eval.getFeedback(),
                         eval.getStrengths(),
-                        eval.getWeaknesses()
+                        eval.getWeaknesses(),
+                        null
                 );
             }
             turns.add(new com.vaibhav.aiinterviewcoach.interview.dto.TranscriptTurn(
@@ -509,8 +527,8 @@ public class InterviewService {
         );
     }
 
-    public EvaluationResult evaluateAnswer(String question, String answer, InterviewContext context) {
-        String prompt = promptBuilder.buildAnswerEvaluationPrompt(question, answer, context);
+    public EvaluationResult evaluateAnswer(String question, String answer, InterviewContext context, List<String> allowedSkills) {
+        String prompt = promptBuilder.buildAnswerEvaluationPrompt(question, answer, context, allowedSkills);
 
         try {
             String jsonResponse = chatClient.prompt()
@@ -545,6 +563,7 @@ public class InterviewService {
             return result;
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("AI evaluation failed to produce a valid result.");
         }
     }
