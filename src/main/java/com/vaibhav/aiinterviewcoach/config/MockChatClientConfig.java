@@ -37,7 +37,7 @@ public class MockChatClientConfig {
                                 "strengths": "None.",
                                 "weaknesses": "Everything.",
                                 "skills": [
-                                    {"skill": "JAVA", "score": 40, "relevance": 90},
+                                    {"skill": "SPRING_SECURITY", "score": 40, "relevance": 90},
                                     {"skill": "SPRING_BOOT", "score": 40, "relevance": 90}
                                 ]
                             }
@@ -56,6 +56,48 @@ public class MockChatClientConfig {
                             }
                         """;
                     }
+                } else if (req.contains("experienceLevel")) {
+                    responseStr = """
+                        {
+                          "summary": "Experienced Java Developer.",
+                          "experienceLevel": "MID_LEVEL",
+                          "skills": [
+                            {"skill": "JAVA", "confidence": 95},
+                            {"skill": "SPRING_BOOT", "confidence": 90},
+                            {"skill": "SPRING_SECURITY", "confidence": 85},
+                            {"skill": "POSTGRESQL", "confidence": 80}
+                          ]
+                        }
+                    """;
+                } else if (req.contains("requiredSkills")) {
+                    responseStr = """
+                        {
+                          "company": "Tech Corp",
+                          "role": "Java Backend Developer",
+                          "seniority": "MID_LEVEL",
+                          "summary": "Looking for a strong Java developer.",
+                          "requiredSkills": [
+                            {"skill": "JAVA", "importance": 100},
+                            {"skill": "SPRING_BOOT", "importance": 90},
+                            {"skill": "SPRING_SECURITY", "importance": 80}
+                          ],
+                          "preferredSkills": [
+                            {"skill": "POSTGRESQL", "importance": 60}
+                          ]
+                        }
+                    """;
+                } else if (req.contains("claims")) {
+                    responseStr = """
+                        {
+                          "claims": [
+                            {
+                              "claimText": "Built a microservices architecture handling 10k RPS",
+                              "status": "NEEDS_VERIFICATION",
+                              "verificationQuestions": "How did you measure the 10k RPS?"
+                            }
+                          ]
+                        }
+                    """;
                 } else if (req.contains("nextQuestion")) {
                     responseStr = "What is Spring Boot?";
                 }
