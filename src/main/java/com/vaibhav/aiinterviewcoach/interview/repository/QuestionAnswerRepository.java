@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface QuestionAnswerRepository extends JpaRepository<QuestionAnswer, Long> {
     List<QuestionAnswer> findBySessionSessionIdOrderByQuestionNumberAsc(String sessionId);
+    List<QuestionAnswer> findBySession_Interview_UserId(Long userId);
 }

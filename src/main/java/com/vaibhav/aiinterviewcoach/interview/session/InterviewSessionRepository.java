@@ -8,4 +8,6 @@ public interface InterviewSessionRepository
         extends JpaRepository<InterviewSession, Long> {
 
     Optional<InterviewSession> findBySessionId(String sessionId);
+    Optional<InterviewSession> findByInterviewId(Long interviewId);
+    java.util.List<InterviewSession> findByInterview_UserId(Long userId);
 }

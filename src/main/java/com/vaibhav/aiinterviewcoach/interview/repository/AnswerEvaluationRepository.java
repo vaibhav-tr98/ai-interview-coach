@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface AnswerEvaluationRepository extends JpaRepository<AnswerEvaluation, Long> {
     List<AnswerEvaluation> findByQuestionAnswerSessionSessionId(String sessionId);
     Optional<AnswerEvaluation> findByQuestionAnswerId(Long questionAnswerId);
+    List<AnswerEvaluation> findByQuestionAnswer_Session_Interview_UserId(Long userId);
 }
