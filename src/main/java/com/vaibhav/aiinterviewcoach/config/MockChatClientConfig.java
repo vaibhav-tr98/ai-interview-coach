@@ -100,6 +100,26 @@ public class MockChatClientConfig {
                     """;
                 } else if (req.contains("nextQuestion")) {
                     responseStr = "What is Spring Boot?";
+                } else if (req.contains("targetRole") && req.contains("dayNumber")) {
+                    responseStr = """
+                        {
+                          "targetRole": "Java Backend Developer",
+                          "days": [
+                            {
+                              "dayNumber": 1,
+                              "skill": "SPRING_SECURITY",
+                              "topic": "JWT Authentication",
+                              "description": "Study JWT authentication flow"
+                            },
+                            {
+                              "dayNumber": 2,
+                              "skill": "POSTGRESQL",
+                              "topic": "Indexes",
+                              "description": "Learn DB indexes"
+                            }
+                          ]
+                        }
+                    """;
                 }
                 
                 return new org.springframework.ai.chat.model.ChatResponse(java.util.List.of(
