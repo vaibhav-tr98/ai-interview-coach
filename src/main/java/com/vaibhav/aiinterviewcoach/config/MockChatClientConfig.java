@@ -19,7 +19,24 @@ public class MockChatClientConfig {
                 String req = prompt.getContents();
                 String responseStr = "";
                 
-                if (req.contains("InitialInterviewResult") || req.contains("interviewerMessage")) {
+                if (req.contains("fillerWordCount")) {
+                    responseStr = """
+                        {
+                          "overallScore": 85,
+                          "clarityScore": 80,
+                          "relevanceScore": 90,
+                          "completenessScore": 85,
+                          "concisenessScore": 75,
+                          "vocabularyScore": 80,
+                          "confidenceScore": 85,
+                          "fillerWordCount": 5,
+                          "repetitionCount": 2,
+                          "strengths": ["Clear pronunciation", "Good use of technical vocabulary"],
+                          "weaknesses": ["Uses filler words frequently", "Some answers are slightly overly long"],
+                          "recommendations": ["Practice pausing instead of using filler words", "Focus on the STAR method to stay concise"]
+                        }
+                    """;
+                } else if (req.contains("InitialInterviewResult") || req.contains("interviewerMessage")) {
                     responseStr = """
                         {
                             "interviewerMessage": "Hello, let's start the Java interview.",
