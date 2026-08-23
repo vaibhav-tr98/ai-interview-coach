@@ -137,6 +137,19 @@ public class MockChatClientConfig {
                           ]
                         }
                     """;
+                } else if (req.contains("Generate a new coding problem")) {
+                    responseStr = """
+                        {
+                          "title": "Two Sum",
+                          "description": "Find two numbers that add up to a target.",
+                          "constraints": "Array size > 2",
+                          "examples": "input: [1, 2], target: 3, output: [0, 1]",
+                          "expectedInputFormat": "int[] nums, int target",
+                          "expectedOutputFormat": "int[]"
+                        }
+                    """;
+                } else if (req.contains("Give a brief hint for solving this problem")) {
+                    responseStr = "Consider using a HashMap to store the numbers you have seen so far.";
                 }
                 
                 return new org.springframework.ai.chat.model.ChatResponse(java.util.List.of(
