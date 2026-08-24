@@ -38,6 +38,17 @@ public class AnswerEvaluation {
     @Column(columnDefinition = "TEXT")
     private String weaknesses;
 
+    // M13 fields
+    private Integer technicalCorrectnessScore;
+    private Integer depthScore;
+    private Integer projectOwnershipScore;
+    private Boolean consistencySignal;
+    private Integer communicationScore;
+    private Integer confidenceScore;
+    
+    @Column(columnDefinition = "TEXT")
+    private String unsupportedClaims;
+
     private LocalDateTime createdAt;
 
     @PrePersist

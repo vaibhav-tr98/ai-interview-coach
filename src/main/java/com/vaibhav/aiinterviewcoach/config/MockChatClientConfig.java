@@ -36,11 +36,48 @@ public class MockChatClientConfig {
                           "recommendations": ["Practice pausing instead of using filler words", "Focus on the STAR method to stay concise"]
                         }
                     """;
-                } else if (req.contains("InitialInterviewResult") || req.contains("interviewerMessage")) {
+                } else if (req.contains("InitialInterviewResult") || req.contains("interviewerMessage") || req.contains("deep project-based interview") || req.contains("deep resume-based interview")) {
                     responseStr = """
                         {
-                            "interviewerMessage": "Hello, let's start the Java interview.",
-                            "question": "What is polymorphism in Java?"
+                            "interviewerMessage": "Hello, let's start the deep interview.",
+                            "question": "Could you walk me through the architecture of your project?"
+                        }
+                    """;
+                } else if (req.contains("technical depth/ownership")) {
+                    responseStr = """
+                        {
+                          "evaluation": {
+                            "score": 85,
+                            "feedback": "Good architecture overview.",
+                            "strengths": "Clear explanation of components.",
+                            "weaknesses": "Lacks some depth on database indexing.",
+                            "technicalCorrectnessScore": 80,
+                            "depthScore": 70,
+                            "projectOwnershipScore": 90,
+                            "consistencySignal": true,
+                            "communicationScore": 85,
+                            "confidenceScore": 80,
+                            "unsupportedClaims": "None"
+                          },
+                          "nextQuestion": "How did you optimize your PostgreSQL queries?",
+                          "closingMessage": "Thank you, that's all."
+                        }
+                    """;
+                } else if (req.contains("final deep analysis")) {
+                    responseStr = """
+                        {
+                          "overallScore": 85,
+                          "technicalCorrectnessScore": 80,
+                          "depthScore": 75,
+                          "projectOwnershipScore": 90,
+                          "consistencySignal": true,
+                          "communicationScore": 85,
+                          "confidenceScore": 80,
+                          "strengths": ["Strong architectural knowledge"],
+                          "weaknesses": ["Database optimization"],
+                          "unsupportedClaims": "None",
+                          "recommendations": ["Study query execution plans"],
+                          "interviewSummary": "Solid candidate with strong ownership."
                         }
                     """;
                 } else if (req.contains("EvaluationResult") || req.contains("strengths")) {

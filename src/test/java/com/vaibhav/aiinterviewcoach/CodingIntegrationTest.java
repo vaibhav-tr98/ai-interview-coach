@@ -64,6 +64,22 @@ public class CodingIntegrationTest {
             testUser = userRepository.findByEmail("test@example.com").get();
         }
 
+        // Clean up coding tables to prevent test pollution
+        try {
+            org.springframework.context.ApplicationContext ctx = 
+                org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(
+                    mockMvc.getDispatcherServlet().getServletContext());
+            if (ctx != null) {
+                com.vaibhav.aiinterviewcoach.coding.repository.CodingSubmissionRepository subRepo = 
+                    ctx.getBean(com.vaibhav.aiinterviewcoach.coding.repository.CodingSubmissionRepository.class);
+                com.vaibhav.aiinterviewcoach.coding.repository.CodingProblemRepository probRepo = 
+                    ctx.getBean(com.vaibhav.aiinterviewcoach.coding.repository.CodingProblemRepository.class);
+                subRepo.deleteAll();
+                probRepo.deleteAll();
+            }
+        } catch (Exception e) {}
+
+
         if (skillRepository.findByName("ARRAYS").isEmpty()) {
             Skill skill = Skill.builder()
                 .name("ARRAYS")
