@@ -187,6 +187,30 @@ public class MockChatClientConfig {
                     """;
                 } else if (req.contains("Give a brief hint for solving this problem")) {
                     responseStr = "Consider using a HashMap to store the numbers you have seen so far.";
+                } else if (req.contains("Generate a technical question for GATE preparation")) {
+                    responseStr = """
+                        {
+                          "questionText": "What is the time complexity of binary search?",
+                          "optionA": "O(1)",
+                          "optionB": "O(n)",
+                          "optionC": "O(log n)",
+                          "optionD": "O(n log n)",
+                          "correctOption": "C",
+                          "explanation": "Binary search divides the search interval in half each time."
+                        }
+                    """;
+                } else if (req.contains("Explain the correct answer for this GATE question")) {
+                    responseStr = """
+                        {
+                          "explanation": "This is a deterministic explanation."
+                        }
+                    """;
+                } else if (req.contains("Provide a short, helpful hint for this GATE question")) {
+                    responseStr = """
+                        {
+                          "hint": "Think about halving."
+                        }
+                    """;
                 }
                 
                 return new org.springframework.ai.chat.model.ChatResponse(java.util.List.of(
