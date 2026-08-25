@@ -19,7 +19,22 @@ public class MockChatClientConfig {
                 String req = prompt.getContents();
                 String responseStr = "";
                 
-                if (req.contains("fillerWordCount")) {
+                if (req.contains("Evaluate the following two-person conversation.")) {
+                    responseStr = """
+                        {
+                          "grammarScore": 82,
+                          "vocabularyScore": 78,
+                          "fluencyScore": 80,
+                          "clarityScore": 85,
+                          "relevanceScore": 88,
+                          "confidenceScore": 76,
+                          "overallScore": 81,
+                          "strengths": ["Clear explanations", "Relevant responses"],
+                          "improvements": ["Use more varied vocabulary", "Reduce repetitive sentence structures"],
+                          "feedback": "Good overall communication with room for improvement in vocabulary variety."
+                        }
+                    """;
+                } else if (req.contains("fillerWordCount")) {
                     responseStr = """
                         {
                           "overallScore": 85,
