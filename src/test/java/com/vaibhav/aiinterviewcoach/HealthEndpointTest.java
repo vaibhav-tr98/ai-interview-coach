@@ -22,4 +22,11 @@ public class HealthEndpointTest {
                .andExpect(status().isOk())
                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value("UP"));
     }
+
+    @Test
+    public void testHealthzEndpoint() throws Exception {
+        mockMvc.perform(get("/healthz"))
+               .andExpect(status().isOk())
+               .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value("UP"));
+    }
 }
