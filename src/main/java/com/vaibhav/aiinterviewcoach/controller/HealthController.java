@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class HealthController {
 
     @GetMapping("/")
-    public String root() {
-        return "AI Interview Coach API is running 🚀";
+    public java.util.Map<String, String> root() {
+        return java.util.Map.of("message", "AI Interview Coach API is running 🚀");
     }
 
     @GetMapping("/api/v1/health")
-    public String health() {
-        return "OK";
+    public java.util.Map<String, String> health() {
+        return java.util.Map.of("status", "UP");
     }
 }
