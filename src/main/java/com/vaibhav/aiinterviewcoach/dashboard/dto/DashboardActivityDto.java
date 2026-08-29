@@ -15,4 +15,16 @@ public class DashboardActivityDto {
     private String activityType;
     private String description;
     private LocalDateTime timestamp;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("title")
+    public String getTitle() {
+        return activityType;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("date")
+    public String getDate() {
+        if (timestamp == null) return null;
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        return timestamp.format(formatter);
+    }
 }

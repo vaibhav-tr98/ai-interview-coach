@@ -12,5 +12,5 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=builder /app/target/aiinterviewcoach-0.0.1-SNAPSHOT.jar target/aiinterviewcoach-0.0.1-SNAPSHOT.jar
-EXPOSE 8080
+EXPOSE 10000
 ENTRYPOINT ["java", "-jar", "target/aiinterviewcoach-0.0.1-SNAPSHOT.jar"]

@@ -22,8 +22,10 @@ public record InterviewRequest(
 
         String role,
 
+        @com.fasterxml.jackson.annotation.JsonAlias("difficulty")
         String dsaDifficulty,
 
+        @com.fasterxml.jackson.annotation.JsonAlias("topic")
         String dsaTopic,
 
         String projectUrl,

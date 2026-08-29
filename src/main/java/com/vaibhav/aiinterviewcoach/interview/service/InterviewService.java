@@ -437,13 +437,22 @@ public class InterviewService {
         }
 
         double totalScore = 0;
+        double totalTechScore = 0;
+        double totalCommScore = 0;
+        StringBuilder finalFeedback = new StringBuilder("Overall Performance:\n");
         java.util.List<String> strengths = new java.util.ArrayList<>();
         java.util.List<String> weaknesses = new java.util.ArrayList<>();
         java.util.List<String> recommendations = new java.util.ArrayList<>();
 
         for (AnswerEvaluation eval : evaluations) {
-            totalScore += eval.getScore();
+            totalScore += eval.getScore() != null ? eval.getScore() : 0;
+            totalTechScore += eval.getTechnicalCorrectnessScore() != null ? eval.getTechnicalCorrectnessScore() : (eval.getScore() != null ? eval.getScore() : 0);
+            totalCommScore += eval.getCommunicationScore() != null ? eval.getCommunicationScore() : (eval.getScore() != null ? eval.getScore() : 0);
             
+            if (eval.getFeedback() != null) {
+                finalFeedback.append("- ").append(eval.getFeedback()).append("\n");
+            }
+
             if (eval.getStrengths() != null && !strengths.contains(eval.getStrengths())) {
                 strengths.add(eval.getStrengths());
             }
@@ -454,6 +463,9 @@ public class InterviewService {
         }
 
         int overallScore = (int) Math.round(totalScore / evaluations.size());
+        int technicalScore = (int) Math.round(totalTechScore / evaluations.size());
+        int communicationScore = (int) Math.round(totalCommScore / evaluations.size());
+        String feedback = finalFeedback.toString();
 
         return new com.vaibhav.aiinterviewcoach.interview.dto.FinalInterviewResponse(
                 sessionId,
@@ -461,6 +473,9 @@ public class InterviewService {
                 session.getInterview().getType().name(),
                 5,
                 overallScore,
+                technicalScore,
+                communicationScore,
+                feedback,
                 strengths,
                 weaknesses,
                 recommendations

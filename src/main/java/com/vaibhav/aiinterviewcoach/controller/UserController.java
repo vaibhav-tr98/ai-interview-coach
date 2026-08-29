@@ -18,8 +18,14 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public User registerUser(@Valid @RequestBody UserRequest userRequest) {
-        return userService.saveUser(userRequest);
+    public UserResponse registerUser(@Valid @RequestBody UserRequest userRequest) {
+        User user = userService.saveUser(userRequest);
+        UserResponse response = new UserResponse();
+        response.setId(user.getId());
+        response.setName(user.getName());
+        response.setEmail(user.getEmail());
+        response.setRole(user.getRole());
+        return response;
     }
 
     @GetMapping
@@ -58,8 +64,13 @@ public String admin() {
 
 @GetMapping("/profile")
 @PreAuthorize("hasAnyRole('USER','ADMIN')")
-public String profile() {
-    return "Welcome User";
+public UserResponse profile() {
+    org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+    String email = authentication.getName();
+    return userService.getAllUsers().stream()
+            .filter(u -> email.equals(u.getEmail()))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("User not found"));
 }
 
 

@@ -8,6 +8,7 @@ public record AnswerResponse(
         EvaluationResponse evaluation,
         String nextQuestion,
         String closingMessage,
+        @com.fasterxml.jackson.annotation.JsonProperty("isComplete")
         Boolean completed
 ) {
 }
