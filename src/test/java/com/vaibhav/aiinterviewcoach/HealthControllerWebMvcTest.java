@@ -13,7 +13,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+
 @WebMvcTest(controllers = HealthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 public class HealthControllerWebMvcTest {
 
     @Autowired
@@ -29,6 +33,6 @@ public class HealthControllerWebMvcTest {
     public void testHealthEndpoint() throws Exception {
         mockMvc.perform(get("/api/v1/health"))
                .andExpect(status().isOk())
-               .andExpect(content().string("OK"));
+               .andExpect(jsonPath("$.status").value("UP"));
     }
 }

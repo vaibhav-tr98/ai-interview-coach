@@ -38,7 +38,8 @@ public class SecurityConfig {
                                 "/api/v1/users/login",
                                 "/api/v1/health",
                                 "/healthz",
-                                "/debug/**"
+                                "/debug/**",
+                                "/error"
                         ).permitAll()
                         .anyRequest()
                         .authenticated()
