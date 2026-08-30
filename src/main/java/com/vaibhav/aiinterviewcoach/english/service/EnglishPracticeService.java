@@ -116,7 +116,8 @@ public class EnglishPracticeService {
         
         List<EnglishPracticeMessage> messages = messageRepository.findBySessionOrderBySequenceNumberAsc(session);
         if (messages.size() < 2) {
-            throw new IllegalStateException("Not enough messages to evaluate");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Not enough messages to evaluate");
         }
         
         String prompt = promptBuilder.buildEvaluationPrompt(session, messages);
