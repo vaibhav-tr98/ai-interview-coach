@@ -261,5 +261,12 @@ public class PromptBuilder {
                     break;
             }
         }
+
+        if (context.weakSkills() != null && !context.weakSkills().isEmpty()) {
+            prompt.append("\n--- Historical Skill Personalization ---\n");
+            prompt.append("The candidate has historically struggled with these skills: ")
+                  .append(String.join(", ", context.weakSkills())).append(".\n");
+            prompt.append("Prioritize testing these areas when appropriate, while still respecting the overall interview type and context.\n");
+        }
     }
 }

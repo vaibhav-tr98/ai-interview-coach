@@ -366,6 +366,16 @@ public class InterviewService {
     }
     
     private InterviewContext buildContext(Interview interview) {
+        java.util.List<String> weakSkills = null;
+        if (interview.getUser() != null) {
+            weakSkills = progressService.getPracticedSkills(interview.getUser())
+                    .stream()
+                    .sorted((a, b) -> Double.compare(a.averageScore(), b.averageScore()))
+                    .limit(3)
+                    .map(com.vaibhav.aiinterviewcoach.progress.dto.SkillProgressResponse::skill)
+                    .toList();
+        }
+
         return InterviewContext.builder()
                 .interviewType(interview.getType())
                 .role(interview.getRole())
@@ -378,6 +388,7 @@ public class InterviewService {
                 .projectUrl(interview.getProjectUrl())
                 .durationMinutes(interview.getDurationMinutes())
                 .interviewerPersona(interview.getInterviewerPersona())
+                .weakSkills(weakSkills)
                 .build();
     }
 

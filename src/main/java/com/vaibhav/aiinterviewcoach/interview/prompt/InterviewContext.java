@@ -6,6 +6,8 @@ import com.vaibhav.aiinterviewcoach.interview.enums.InterviewerPersona;
 import com.vaibhav.aiinterviewcoach.interview.enums.InterviewType;
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder
 public record InterviewContext(
         InterviewType interviewType,
@@ -18,5 +20,6 @@ public record InterviewContext(
         String projectDescription,
         String projectUrl,
         Integer durationMinutes,
-        InterviewerPersona interviewerPersona
+        InterviewerPersona interviewerPersona,
+        List<String> weakSkills
 ) {}
