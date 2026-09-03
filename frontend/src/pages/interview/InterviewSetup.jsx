@@ -16,7 +16,12 @@ export const InterviewSetup = () => {
     interviewType: 'HR',
     difficulty: 'MEDIUM',
     topic: 'General',
-    experienceLevel: 'JUNIOR'
+    experienceLevel: 'JUNIOR',
+    role: '',
+    resume: '',
+    jobDescription: '',
+    projectDescription: '',
+    interviewerPersona: 'FRIENDLY'
   });
 
   const handleSubmit = async (e) => {
@@ -121,6 +126,69 @@ export const InterviewSetup = () => {
                   className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Role</label>
+                <input
+                  type="text"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  placeholder="e.g. Java Backend Developer"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Interviewer Persona</label>
+                <select
+                  name="interviewerPersona"
+                  value={formData.interviewerPersona}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="FRIENDLY">FRIENDLY</option>
+                  <option value="PROFESSIONAL">PROFESSIONAL</option>
+                  <option value="STRICT">STRICT</option>
+                  <option value="TECHNICAL">TECHNICAL</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Resume (Plain Text)</label>
+              <textarea
+                name="resume"
+                value={formData.resume}
+                onChange={handleChange}
+                placeholder="Paste your resume here..."
+                rows={4}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Job Description (Plain Text)</label>
+              <textarea
+                name="jobDescription"
+                value={formData.jobDescription}
+                onChange={handleChange}
+                placeholder="Paste the target job description here..."
+                rows={4}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Project Description (Plain Text)</label>
+              <textarea
+                name="projectDescription"
+                value={formData.projectDescription}
+                onChange={handleChange}
+                placeholder="Paste details of a project you want to be interviewed on..."
+                rows={4}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
 
             <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
