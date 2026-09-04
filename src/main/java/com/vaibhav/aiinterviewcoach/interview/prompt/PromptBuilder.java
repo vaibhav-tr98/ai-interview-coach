@@ -85,6 +85,15 @@ public class PromptBuilder {
         prompt.append("- If the candidate shows a REPEATED WEAKNESS across history: probe it once more when relevant, then move on rather than endlessly repeating the same concept.\n");
         prompt.append("- Avoid repeatedly asking essentially the same question twice.\n");
         prompt.append("- Change topic if appropriate, but remain within the configured interview scope.\n");
+        if (state.currentDifficulty() != null) {
+            prompt.append("\n--- Adaptive Difficulty ---\n");
+            prompt.append("Baseline interview difficulty: ").append(context.difficulty() != null ? context.difficulty().name() : "N/A").append(".\n");
+            prompt.append("Current adaptive difficulty for this question: ").append(state.currentDifficulty().name()).append(".\n");
+            prompt.append("Generate the next question at ").append(state.currentDifficulty().name()).append(" difficulty.\n");
+            if (context.dsaTopic() != null) {
+                prompt.append("For DSA questions, this adaptive difficulty overrides the baseline DSA difficulty for this specific turn.\n");
+            }
+        }
         
         prompt.append("\nOutput ONLY the next question text. Do NOT reveal scores, evaluations, strengths, weaknesses, or coaching hints to the candidate.");
 

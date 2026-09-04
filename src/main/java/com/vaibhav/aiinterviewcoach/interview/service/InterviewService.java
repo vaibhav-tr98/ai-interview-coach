@@ -153,6 +153,7 @@ public class InterviewService {
                     .currentQuestion(result.question())
                     .questionNumber(1)
                     .status(SessionStatus.ACTIVE)
+                    .currentDifficulty(interview.getDifficulty())
                     .build();
 
             session = interviewSessionRepository.save(session);
@@ -275,9 +276,23 @@ public class InterviewService {
         List<InterviewTurnContext> fullHistory = fetchHistory(session.getSessionId());
         List<InterviewTurnContext> history = fullHistory.isEmpty() ? fullHistory : fullHistory.subList(0, fullHistory.size() - 1);
 
+        Difficulty currentDiff = session.getCurrentDifficulty() != null ? session.getCurrentDifficulty() : interview.getDifficulty();
+        Difficulty nextDiff = currentDiff;
+        if (evaluationResponse.score() > 80) {
+            if (currentDiff == Difficulty.EASY) nextDiff = Difficulty.MEDIUM;
+            else if (currentDiff == Difficulty.MEDIUM) nextDiff = Difficulty.HARD;
+        } else if (evaluationResponse.score() < 50) {
+            if (currentDiff == Difficulty.HARD) nextDiff = Difficulty.MEDIUM;
+            else if (currentDiff == Difficulty.MEDIUM) nextDiff = Difficulty.EASY;
+        }
+        
+        session.setCurrentDifficulty(nextDiff);
+        interviewSessionRepository.save(session);
+
         InterviewState state = InterviewState.builder()
                 .nextQuestionNumber(currentQuestionNumber + 1)
                 .totalQuestions(5)
+                .currentDifficulty(nextDiff)
                 .build();
 
         String prompt = promptBuilder.buildNextQuestionPrompt(

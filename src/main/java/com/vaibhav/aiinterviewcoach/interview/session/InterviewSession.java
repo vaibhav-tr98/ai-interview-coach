@@ -40,6 +40,9 @@ public class InterviewSession {
 
     private LocalDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    private com.vaibhav.aiinterviewcoach.interview.enums.Difficulty currentDifficulty;
+
     @PrePersist
     public void onCreate() {
         if (sessionId == null) {
