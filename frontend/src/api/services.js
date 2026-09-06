@@ -82,4 +82,12 @@ export const profileService = {
   getProfile: () => api.get('/api/v1/users/profile'),
   getResumes: () => api.get('/api/resumes'),
   createResume: (data) => api.post('/api/resumes', data),
+  uploadResume: (file, title) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (title) {
+      formData.append('title', title);
+    }
+    return api.post('/api/resumes/upload', formData);
+  },
 };

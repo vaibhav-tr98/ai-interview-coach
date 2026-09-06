@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { interviewService } from '../../api/services';
+import { interviewService, profileService } from '../../api/services';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { PageHeader } from '../../components/PageHeader';
@@ -12,6 +12,13 @@ export const InterviewSetup = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const [resumes, setResumes] = useState([]);
+  const [loadingResumes, setLoadingResumes] = useState(true);
+  const [resumeInputMode, setResumeInputMode] = useState('select');
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState('');
+
   const [formData, setFormData] = useState({
     interviewType: 'HR',
     difficulty: 'MEDIUM',
@@ -19,18 +26,61 @@ export const InterviewSetup = () => {
     experienceLevel: 'JUNIOR',
     role: '',
     resume: '',
+    resumeId: '',
     jobDescription: '',
     projectDescription: '',
     interviewerPersona: 'FRIENDLY'
   });
+
+  useEffect(() => {
+    fetchResumes();
+  }, []);
+
+  const fetchResumes = async () => {
+    try {
+      const response = await profileService.getResumes();
+      setResumes(response.data);
+    } catch (err) {
+      console.error('Failed to load resumes:', err);
+    } finally {
+      setLoadingResumes(false);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!uploadFile) return;
+    setUploading(true);
+    setError(null);
+    setUploadSuccess('');
+    try {
+      const res = await profileService.uploadResume(uploadFile);
+      setUploadSuccess('Resume uploaded successfully');
+      setUploadFile(null);
+      await fetchResumes();
+      if (res.data?.id) {
+        setFormData(prev => ({ ...prev, resumeId: res.data.id }));
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not parse resume. Ensure it is a text-based PDF or DOCX.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    const payload = { ...formData };
+    if (resumeInputMode === 'select') {
+      delete payload.resume;
+    } else {
+      delete payload.resumeId;
+    }
+
     try {
-      const response = await interviewService.start(formData);
+      const response = await interviewService.start(payload);
       // Assuming response contains the sessionId
       const sessionId = response.data?.id || response.data?.sessionId;
       if (sessionId) {
@@ -155,16 +205,88 @@ export const InterviewSetup = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Resume (Plain Text)</label>
-              <textarea
-                name="resume"
-                value={formData.resume}
-                onChange={handleChange}
-                placeholder="Paste your resume here..."
-                rows={4}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="space-y-4 pt-4 border-t border-gray-100">
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="resumeInputMode"
+                    value="select"
+                    checked={resumeInputMode === 'select'}
+                    onChange={() => setResumeInputMode('select')}
+                    className="text-blue-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Use Saved Resume</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="resumeInputMode"
+                    value="paste"
+                    checked={resumeInputMode === 'paste'}
+                    onChange={() => setResumeInputMode('paste')}
+                    className="text-blue-600"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Paste Resume Text</span>
+                </label>
+              </div>
+
+              {resumeInputMode === 'select' && (
+                <div className="space-y-4">
+                  {loadingResumes ? (
+                    <p className="text-sm text-gray-500">Loading resumes...</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <select
+                        name="resumeId"
+                        value={formData.resumeId}
+                        onChange={handleChange}
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">[ Select a saved resume ]</option>
+                        {resumes.map(r => (
+                          <option key={r.id} value={r.id}>{r.title || `Resume ${r.id}`}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 border border-gray-200 p-4 rounded-md bg-gray-50">
+                    <label className="block text-sm font-medium text-gray-700">Or Upload New Resume</label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => setUploadFile(e.target.files[0])}
+                        className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      <Button 
+                        type="button" 
+                        onClick={handleUpload}
+                        disabled={!uploadFile || uploading}
+                        className="whitespace-nowrap"
+                      >
+                        {uploading ? 'Uploading...' : 'Upload'}
+                      </Button>
+                    </div>
+                    {uploadSuccess && <p className="text-sm text-green-600">{uploadSuccess}</p>}
+                  </div>
+                </div>
+              )}
+
+              {resumeInputMode === 'paste' && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Resume (Plain Text)</label>
+                  <textarea
+                    name="resume"
+                    value={formData.resume}
+                    onChange={handleChange}
+                    placeholder="Paste your resume here..."
+                    rows={4}
+                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

@@ -30,6 +30,27 @@ public class ResumeController {
         return ResponseEntity.ok(resumeAnalysisService.createResume(request));
     }
 
+    @PostMapping(value = "/upload", consumes = "multipart/form-data")
+    public ResponseEntity<ResumeAnalysisResponse> uploadResume(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestParam(value = "title", required = false) String title) {
+        
+        String extractedText = resumeAnalysisService.parseResumeFile(file);
+        
+        if (title == null || title.trim().isEmpty()) {
+            title = file.getOriginalFilename();
+            if (title == null || title.trim().isEmpty()) {
+                title = "Uploaded Resume";
+            }
+        }
+        
+        ResumeRequest request = new ResumeRequest();
+        request.setTitle(title);
+        request.setRawText(extractedText);
+        
+        return ResponseEntity.ok(resumeAnalysisService.createResume(request));
+    }
+
     @GetMapping
     public ResponseEntity<List<ResumeAnalysisResponse>> getUserResumes() {
         return ResponseEntity.ok(resumeAnalysisService.getUserResumes());

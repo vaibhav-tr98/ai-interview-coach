@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.InputStream;
 
 @Service
 public class ResumeAnalysisService {
@@ -60,6 +62,40 @@ public class ResumeAnalysisService {
         return userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    public String parseResumeFile(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new RuntimeException("Uploaded file is empty");
+        }
+
+        String filename = file.getOriginalFilename();
+        if (filename == null || (!filename.toLowerCase().endsWith(".pdf") 
+                && !filename.toLowerCase().endsWith(".doc") 
+                && !filename.toLowerCase().endsWith(".docx"))) {
+            throw new RuntimeException("Unsupported file type. Please upload a PDF or DOCX file.");
+        }
+
+        String extractedText;
+        try (InputStream stream = file.getInputStream()) {
+            org.apache.tika.Tika tika = new org.apache.tika.Tika();
+            extractedText = tika.parseToString(stream);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not extract readable text from this resume. Please upload a text-based PDF or DOCX.", e);
+        }
+
+        if (extractedText == null || extractedText.trim().isEmpty()) {
+            throw new RuntimeException("Could not extract readable text from this resume. Please upload a text-based PDF or DOCX.");
+        }
+
+        extractedText = extractedText.replaceAll("\\s+", " ").trim();
+
+        if (extractedText.length() > 10000) {
+            throw new RuntimeException("Extracted text exceeds the maximum allowed length of 10,000 characters.");
+        }
+
+        return extractedText;
+    }
+
 
     @Transactional
     public ResumeAnalysisResponse createResume(ResumeRequest request) {

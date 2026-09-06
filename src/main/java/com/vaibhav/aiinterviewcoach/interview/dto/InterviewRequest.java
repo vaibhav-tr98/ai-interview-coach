@@ -14,8 +14,11 @@ public record InterviewRequest(
         @Size(max = 5000)
         String resume,
 
+        Long resumeId,
+
         @Size(max = 5000)
         String jobDescription,
+
 
         @Size(max = 2000)
         String projectDescription,

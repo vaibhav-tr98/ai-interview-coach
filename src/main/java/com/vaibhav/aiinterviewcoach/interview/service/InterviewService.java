@@ -51,6 +51,7 @@ public class InterviewService {
     private final ObjectMapper objectMapper;
     private final com.vaibhav.aiinterviewcoach.progress.service.ProgressService progressService;
     private final com.vaibhav.aiinterviewcoach.progress.repository.SkillRepository skillRepository;
+    private final com.vaibhav.aiinterviewcoach.intelligence.repository.ResumeRepository resumeRepository;
 
     public InterviewService(ChatClient.Builder builder,
                             PromptBuilder promptBuilder,
@@ -61,7 +62,9 @@ public class InterviewService {
                             UserRepository userRepository,
                             ObjectMapper objectMapper,
                             com.vaibhav.aiinterviewcoach.progress.service.ProgressService progressService,
-                            com.vaibhav.aiinterviewcoach.progress.repository.SkillRepository skillRepository) {
+                            com.vaibhav.aiinterviewcoach.progress.repository.SkillRepository skillRepository,
+                            com.vaibhav.aiinterviewcoach.intelligence.repository.ResumeRepository resumeRepository) {
+
 
         this.chatClient = builder.build();
         this.promptBuilder = promptBuilder;
@@ -73,6 +76,7 @@ public class InterviewService {
         this.objectMapper = objectMapper;
         this.progressService = progressService;
         this.skillRepository = skillRepository;
+        this.resumeRepository = resumeRepository;
     }
 
     public InterviewResponse startInterview(InterviewRequest request) {
@@ -100,6 +104,20 @@ public class InterviewService {
             } catch (IllegalArgumentException ignored) {}
         }
 
+        String finalResumeText = request.resume();
+        if (request.resumeId() != null) {
+            com.vaibhav.aiinterviewcoach.intelligence.entity.Resume resumeEntity = 
+                resumeRepository.findById(request.resumeId())
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Resume not found"));
+            
+            if (!resumeEntity.getUser().getId().equals(currentUser.getId())) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized to access this resume");
+            }
+            finalResumeText = resumeEntity.getRawText();
+        }
+
         Interview interview = Interview.builder()
                 .title(request.interviewType() + " Interview")
                 .type(InterviewType.valueOf(request.interviewType().toUpperCase()))
@@ -109,9 +127,10 @@ public class InterviewService {
                 .role(request.role())
                 .experienceLevel(request.experienceLevel())
                 .dsaTopic(dsaTopic)
-                .resumeText(request.resume())
+                .resumeText(finalResumeText)
                 .jobDescription(request.jobDescription())
                 .projectDescription(request.projectDescription())
+
                 .projectUrl(request.projectUrl())
                 .durationMinutes(request.durationMinutes())
                 .interviewerPersona(persona)
