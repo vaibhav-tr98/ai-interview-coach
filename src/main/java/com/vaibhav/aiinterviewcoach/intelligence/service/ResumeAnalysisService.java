@@ -109,6 +109,7 @@ public class ResumeAnalysisService {
         return mapToResponse(resume);
     }
 
+    @Transactional(readOnly = true)
     public List<ResumeAnalysisResponse> getUserResumes() {
         User user = getAuthenticatedUser();
         return resumeRepository.findByUserId(user.getId()).stream()
@@ -116,6 +117,7 @@ public class ResumeAnalysisService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ResumeAnalysisResponse getResume(Long id) {
         Resume resume = getAndValidateOwnership(id);
         return mapToResponse(resume);
