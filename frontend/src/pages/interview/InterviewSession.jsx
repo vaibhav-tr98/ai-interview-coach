@@ -40,9 +40,10 @@ export const InterviewSession = () => {
     setLoading(true);
     setError(null);
     
-    // Add user answer to local transcript immediately for UI responsiveness
+    // Add current AI question and user answer to local transcript immediately for UI responsiveness
     const newTranscript = [
       ...sessionData.transcript,
+      { sender: 'AI', text: sessionData.question },
       { sender: 'USER', text: answer }
     ];
     
@@ -57,15 +58,11 @@ export const InterviewSession = () => {
       if (response.data?.isComplete || sessionData.currentQuestionIndex >= sessionData.totalQuestions) {
         navigate(`/interviews/${sessionId}/result`);
       } else {
-        // Add AI next question
+        // Update current question for UI
         setSessionData(prev => ({
           ...prev,
           currentQuestionIndex: prev.currentQuestionIndex + 1,
-          question: response.data?.nextQuestion || "What is your greatest strength?",
-          transcript: [
-            ...prev.transcript,
-            { sender: 'AI', text: response.data?.nextQuestion || "What is your greatest strength?" }
-          ]
+          question: response.data?.nextQuestion || "What is your greatest strength?"
         }));
       }
     } catch (err) {
@@ -74,7 +71,7 @@ export const InterviewSession = () => {
       setAnswer(currentAnswer);
       setSessionData(prev => ({
         ...prev,
-        transcript: prev.transcript.filter((_, i) => i !== prev.transcript.length - 1)
+        transcript: prev.transcript.slice(0, -2)
       }));
     } finally {
       setLoading(false);
