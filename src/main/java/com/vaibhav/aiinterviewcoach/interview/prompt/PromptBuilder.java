@@ -216,6 +216,14 @@ public class PromptBuilder {
         
         if (context.resumeText() != null && !context.resumeText().isBlank()) {
             prompt.append("\nCandidate Resume:\n").append(context.resumeText()).append("\n");
+            prompt.append("\n--- Global Resume Personalization ---\n");
+            prompt.append("- The provided resume is authoritative candidate context.\n");
+            prompt.append("- You MUST personalize questions using relevant information from it (technologies, projects, experience, achievements).\n");
+            prompt.append("- Do not invent facts, projects, or experience not present in the resume.\n");
+            prompt.append("- The selected Interview Type remains the primary objective. Resume personalization must complement it, not replace it.\n");
+            prompt.append("- For HR interviews, ask behavioral and situational questions tied directly to the candidate's actual projects or experience.\n");
+            prompt.append("- For Technical interviews, connect technical concepts and deep-dives to the technologies and projects the candidate claims.\n");
+            prompt.append("- Avoid repeatedly asking about the exact same resume item across multiple turns.\n");
         }
         
         if (context.jobDescription() != null && !context.jobDescription().isBlank()) {
